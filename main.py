@@ -19,9 +19,11 @@ api_key = env.odoo_api
 username = env.odoo_username
 product_file = env.product_file
 flyer = env.flyer_file
+configuration = env.config_file
+
 
 #Configuration code
-config = pd.read_csv(r'config/config - new concept.csv', encoding='cp1252')
+config = pd.read_csv(configuration, encoding='cp1252')
 
 config.columns = config.columns.str.strip().str.upper()
 

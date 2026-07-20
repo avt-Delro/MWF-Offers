@@ -11,8 +11,7 @@ from pathlib import Path
 import time
 
 
-
-config = pd.read_csv("config/config - new concept.csv")
+config = env.config_streamlit
 flyer = env.flyer_file
 product_file = env.product_file
 

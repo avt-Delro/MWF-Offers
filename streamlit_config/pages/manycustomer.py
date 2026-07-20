@@ -10,9 +10,8 @@ import os
 from pathlib import Path
 import time
 
-config = pd.read_csv("config/config - new concept.csv")
+config = env.config_streamlit
 flyer = env.flyer_file
-
 product_file = env.product_file
 
 # For temporary files - copying excel from the main configuration
@@ -28,7 +27,6 @@ session_product_file = (temp_dir/f"product_{st.session_state.session_id}.xlsx")
 # Creates a copy if file is not found
 if not os.path.exists(session_product_file):
     shutil.copy2(product_file, session_product_file)
-
 
 
 customers = sorted(config["Customer Name"].dropna().unique())

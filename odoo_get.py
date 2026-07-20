@@ -46,9 +46,6 @@ ODOO_DB_B2B_jetstar = 'jetstar-trailer-production-30682357'
 ODOO_USERNAME_B2B_jetstar = env.odoo_username_jetstar
 ODOO_PASSWORD_B2B_jetstar = env.odoo_api_jetstar
 
-
-
-
 # context = ssl._create_unverified_context()
  
 # common = xmlrpc.client.ServerProxy(

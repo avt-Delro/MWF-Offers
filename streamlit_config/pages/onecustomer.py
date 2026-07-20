@@ -11,7 +11,7 @@ from pathlib import Path
 import time
 
 
-config = env.config_streamlit
+config = pd.read_csv(env.config_streamlit)
 flyer = env.flyer_file
 product_file = env.product_file
 
@@ -31,8 +31,8 @@ if not os.path.exists(session_product_file):
 
 
 location_df = pd.DataFrame({
-    'Location Code': ['V', 'L', 'K', 'F', 'C', 'A', 'W', 'M', 'B'],
-    'Location Name':['California','Latrobe','Kentucky','Fort Worth','Carrolton', 'Apopka', 'Winchester', 'Miami', 'Bloomsburg']
+    'Location Code': ['V', 'L', 'K', 'F', 'C', 'A', 'W', 'M', 'B', 'T'],
+    'Location Name':['California','Latrobe','Kentucky','Fort Worth','Carrolton', 'Apopka', 'Winchester', 'Miami', 'Bloomsburg', 'Tenenssee']
 })
 
 

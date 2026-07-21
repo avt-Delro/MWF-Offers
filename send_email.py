@@ -10,15 +10,35 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 import traceback
-
 import pythoncom
+import smtplib
+import time
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+import os
+import logging
+import datetime
 
 date_today = datetime.now()
 
 month = date_today.strftime('%B')
 
+
+# Define email credentials and SMTP server details for Outlook
+smtp_server = 'smtp.office365.com'
+smtp_port = 587
+email_user = 'sales@wtdus.com'
+email_password = 'ckwvpzrncjvgqqmh'
+
 #Sends file, send_to:: String, cc_s:: String
 def to_send_email(file, flyer_filename, send_to: str, cc_s: str, loc_code: str, cust_name:str):
+    msg = MIMEMultipart()
+    msg["From"] = email_user
+    msg["To"] = send_to
+    msg["CC"] = cc_s
+    
     pythoncom.CoInitialize()
     outlook =win32.Dispatch("Outlook.Application")
 

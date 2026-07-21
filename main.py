@@ -8,7 +8,8 @@ import pandas as pd
 import numpy as np
 import logging
 import odoo_get
-import send_email
+
+import send_email_text
 from itertools import islice
 
 #################################################
@@ -72,7 +73,7 @@ def selective_trigger(vendors_to_be_processed):
 
             logging.info(f'Processing Customer: {customer}')
             file_to_send = odoo_get.add_data(product_file, cust_conf, cust_conf.get('PRICELIST'), cust_conf.get('HIDE_PRICING'), cust_conf.get('CAPPED'))
-            send_email.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
+            send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
             
         except Exception as e:
             logging.error(f"Error occurred while processing customer: {customer}")
@@ -83,4 +84,4 @@ def selective_trigger(vendors_to_be_processed):
 
 
 if __name__ == "__main__":
-    main()
+    selective_trigger(['TIREPARTNERSTXAPOPKA', 'TIREPARTNERSTXWINCHESTER'])

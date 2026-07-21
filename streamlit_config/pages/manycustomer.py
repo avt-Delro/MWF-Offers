@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import odoo_get
-import send_email
+import send_email_text
 import environment as env
 from dotenv import load_dotenv
 import uuid
@@ -64,7 +64,7 @@ if len(selected_customers) > 0:
             
             status.write("Sending Email")
 
-            send_email.to_send_email(
+            send_email_text.to_send_email(
                 file_to_send,
                 flyer,
                 cust_conf["SEND_TO"],

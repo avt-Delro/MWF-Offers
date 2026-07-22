@@ -72,9 +72,26 @@ if selected_customer:
     )
 
     # Uses the dictionary for dataframe
-    st.dataframe(location_df, 
-                 hide_index=True,
-                 use_container_width = True)
+    # Uses the dictionary for dataframe
+    html_table = location_df.to_html(
+        index=False,
+        escape=True,
+        border=0
+    )
+
+    st.markdown(
+        f"""
+        <div style="
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 600px;
+            width: 100%;
+        ">
+            {html_table}
+        </div>
+        """,
+        unsafe_allow_html=True
+        )
 
     hide_pricing = st.checkbox(
         "Hide Pricing",

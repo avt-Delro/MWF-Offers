@@ -4,3 +4,4 @@ myenv/
 .env
 no_pricelist/
 *.pyc
+config/

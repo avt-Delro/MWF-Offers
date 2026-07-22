@@ -22,7 +22,7 @@ configuration = env.config_file
 
 
 #Configuration code
-config = pd.read_csv(configuration, encoding='cp1252')
+config = pd.read_excel(configuration)
 
 config.columns = config.columns.str.strip().str.upper()
 

@@ -1142,7 +1142,7 @@ def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
                 ws.cell(row=row, column=col).border = border
         else:
             #Columns for Green Column
-            column_names = ['K', 'S', 'AE', 'AN', 'AW', 'BF', 'BO', 'BX','CG']
+            column_names = ['K', 'S', 'AE', 'AN', 'AW', 'BF', 'BO', 'BX','CG','CP']
             column_indexes = [column_index_from_string(c) for c in column_names]
             for col in range(1, ws.max_column + 1):
                 if col in column_indexes:

@@ -61,7 +61,7 @@ def try_test():
     for customer, cust_conf in islice(config_lookup.items(), 2):
         logging.info(f'Processing Customer: {customer}')
         file_to_send = odoo_get.add_data(cust_conf, customer)
-        send_email.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
+        send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
 
 def selective_trigger(vendors_to_be_processed):
     odoo_get.get_odoo_data(product_file)
@@ -84,4 +84,4 @@ def selective_trigger(vendors_to_be_processed):
 
 
 if __name__ == "__main__":
-    selective_trigger(['TIREPARTNERSTXAPOPKA', 'TIREPARTNERSTXWINCHESTER'])
+    selective_trigger(['TIREPARTNERSTXWINCHESTER'])

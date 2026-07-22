@@ -862,11 +862,13 @@ def populate_data(file, config, customer, capped):
                 warehouse_cols.append('Miami')
             elif loc == 'B':
                 warehouse_cols.append('Bloomsburg')
+            elif loc == 'T':
+                warehouse_cols.append('Tennesse')
 
     #Filtering data that are 8 and up inventory
     filter_df = return_df[(return_df[warehouse_cols] >= 8).any(axis=1)]
 
-    # create_sheet(f'no_pricelist/data_no_pricelist_4.xlsx', list_no_pricelist, f'{customer}')
+    # create_sheet(f'no_pricelist/data_no_pricelist_5.xlsx', list_no_pricelist, f'{customer}')
 
 
     return filter_df
@@ -1114,7 +1116,7 @@ def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
                 ws.cell(row=row, column=col).border = border
         elif location == 'VLK':
             #Columns for Green Column
-            column_names = ['K', 'S', 'AE', 'AN', 'AW', 'BB', 'BE']
+            column_names = ['K', 'S', 'AE', 'AN', 'AW', 'BB', 'BE', 'CP']
             column_indexes = [column_index_from_string(c) for c in column_names]
             for col in range(1, ws.max_column + 1):
                 if col in column_indexes:

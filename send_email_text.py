@@ -35,7 +35,7 @@ def to_send_email(
     msg["To"] = send_to
     msg["CC"] = cc_s
     msg["Subject"] = (
-        f'"{month} SPECIAL" WTD Domestic Floor Stock Available '
+        f'{month} WTD Domestic Floor Stock Available '
         f'for Full Trailer Loads'
     )
 
@@ -257,7 +257,6 @@ def to_send_email(
 
     # Send Email
     try:
-
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(email_user, email_password)
@@ -273,9 +272,9 @@ def to_send_email(
                 msg.as_string()
             )
 
-        logging.info(
-            f"File {file} sent to Customer:{send_to} with CCs:{cc_s}"
-        )
+            logging.info(
+                f"File {file} sent to Customer:{send_to} with CCs:{cc_s}"
+            )
 
     except Exception as e:
         logging.error(f"Email send failed: {e}")

@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import odoo_get
-import send_email
 import environment as env
 from dotenv import load_dotenv
 import uuid

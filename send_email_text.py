@@ -242,16 +242,16 @@ def to_send_email(
     msg.attach(part)
 
     # Attach Flyer File
-    with open(flyer_filename, "rb") as attachment:
-        part = MIMEBase("application", "octet-stream")
-        part.set_payload(attachment.read())
+    # with open(flyer_filename, "rb") as attachment:
+    #     part = MIMEBase("application", "octet-stream")
+    #     part.set_payload(attachment.read())
 
-    encoders.encode_base64(part)
+    # encoders.encode_base64(part)
 
-    part.add_header(
-        "Content-Disposition",
-        f'attachment; filename="{os.path.basename(flyer_filename)}"'
-    )
+    # part.add_header(
+    #     "Content-Disposition",
+    #     f'attachment; filename="{os.path.basename(flyer_filename)}"'
+    # )
 
     # msg.attach(part)
 

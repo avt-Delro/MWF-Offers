@@ -400,7 +400,7 @@ Ware_gen_col_map = {
 
     'CQ': {
         'type': 'formula',
-        'field': '=(CO{map_cell}*CP{map_cell})+(CR{map_cell}*CR{map_cell})',
+        'field': '=(CO{map_cell}*CP{map_cell})+(CP{map_cell}*CR{map_cell})',
         
     },
     'CU': {

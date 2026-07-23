@@ -253,7 +253,7 @@ def to_send_email(
         f'attachment; filename="{os.path.basename(flyer_filename)}"'
     )
 
-    msg.attach(part)
+    # msg.attach(part)
 
     # Send Email
     try:

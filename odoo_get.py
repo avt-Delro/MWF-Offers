@@ -1789,7 +1789,7 @@ def add_data(file, config, customer, hide_pricing = None, capped='Y'):
                 logger.info(f'Hide pricing for customer: {customer}')
             delete_first_sheet(result_file)
             #For protecting sheet for customers to only edit not unhide columns
-            protect_sheet(result_file, ['K','S','AE','AN','AW','BF','BO', 'BX', 'CG'])
+            protect_sheet(result_file, ['K','S','AE','AN','AW','BF','BO', 'BX', 'CG', 'CP'])
 
         #----- Return result file -----#
         return result_file

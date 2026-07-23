@@ -262,6 +262,8 @@ def is_product_allowed(config, df):
         'ARYO - OTHER': config['ARYO - OTHER'],
         'ARS PCR': config['ARS PCR'],
         'ARS ST - GS': config['ARS ST - GS'],
+        'ARS-TBR': config['ARS-TBR'],
+        'ARS ST - GS': config['ARS ST - GS'],
         'SAFFIRO ST - COFO': config['SAFFIRO ST - COFO'],
         'ARS ST - COFO': config['ARS ST - COFO'],
         'TBR - OTHER': config['TBR - OTHER'],

@@ -18,7 +18,7 @@ from openpyxl import load_workbook
 from copy import copy
 from openpyxl.cell.cell import MergedCell
 from openpyxl.utils import column_index_from_string, get_column_letter
-from openpyxl.styles import PatternFill, Border, Protection, Side
+from openpyxl.styles import PatternFill, Border, Protection, Side, Alignment
 import traceback
 from format_excel import config_ps_mb, mapping_excel
 
@@ -152,8 +152,6 @@ def normalize(text: str) -> str:
         .replace('‑', '-')        # non-breaking hyphen
         .strip()
     )
-
-
 
 
 #Checks if product is allowed
@@ -470,36 +468,57 @@ def get_odoo_data(file):
         
         logger.info("Fetched %d products from Odoo", len(products_info))
 
-        #Pomona
-        get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
-        groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
-
-        #Carrolton
-        get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
-
-        #Latrobe
-        get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
-
-        #Kentucky
-        get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
+        number_of_tries = 3
         
-        #Fort Worth
-        get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
-        
-        #Apopka
-        get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
-        
-        #Winschester
-        get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
+        for i in range(number_of_tries):
+            try:
+                #Pomona
+                get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
+                groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
 
-        #Hileaeah - Miami
-        get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
+                #Carrolton
+                get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
 
-        #Bloomsburg
-        get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
+                #Latrobe
+                get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
 
-        #Winchester
-        get_on_hand_quant(file, partnum, 'Package/', 'Tennesse', 2)
+                #Kentucky
+                get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
+                
+                #Fort Worth
+                get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
+                
+                #Apopka
+                get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
+                
+                #Winschester
+                get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
+
+                #Hileaeah - Miami
+                get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
+
+                #Bloomsburg
+                get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
+
+                #Winchester
+                get_on_hand_quant(file, partnum, 'Package/', 'Tennesse', 2)
+
+                #If all successful break the loop
+                break
+
+            except Exception as e:
+                failed_line = traceback.extract_tb(e.__traceback__)[-1]
+    
+                logger.error(f"Error type: {type(e).__name__}")
+                logger.error(f"Error message: {e}")
+                logger.error(f"File: {failed_line.filename}")
+                logger.error(f"Line number: {failed_line.lineno}")
+                logger.error(f"Code: {failed_line.line}")
+                if i == number_of_tries:
+                    logger.error(
+                        "Maximum number of retries reached."
+                    )
+                    pass
 
         pomona_quant = pd.read_excel(file, sheet_name='Pomona')
         carr_quant = pd.read_excel(file, sheet_name='Carrolton')
@@ -789,7 +808,7 @@ def populate_data(file, config, customer, capped):
             logger.warning(
                 f"No {customer} price rules found for default_code={default_code} not adding it to the output"
             )
-            # list_no_pricelist.append({customer: default_code})
+            list_no_pricelist.append({customer: default_code})
 
             continue
     
@@ -870,10 +889,10 @@ def populate_data(file, config, customer, capped):
     #Filtering data that are 8 and up inventory
     filter_df = return_df[(return_df[warehouse_cols] >= 8).any(axis=1)]
 
-    # create_sheet(f'no_pricelist/data_no_pricelist_5.xlsx', list_no_pricelist, f'{customer}')
-
+    create_sheet(f'no_pricelist/data_no_pricelist_6.xlsx', list_no_pricelist, f'{customer}')
 
     return filter_df
+    
 # for data in config['Customer Name']:
 #     populate_data('output/price_update.xlsx', data)
 #populate_data(product_file, 'G_TOWNFAIR')
@@ -1096,16 +1115,32 @@ def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
 
     types = ['norm','extra']
     conf_type = types[fill_type]
+
     order_fill = PatternFill(
         start_color= '86cb6b',
         end_color= '86cb6b',
         fill_type='solid'
     )
+    white_fill = PatternFill(
+        start_color= 'FFFFFF',
+        end_color= 'FFFFFF',
+        fill_type='solid'
+    )
 
     if conf_type == 'extra':
+        column_names_white = [
+            'P', 'Y', 'AK', 'AT', 'BC',
+            'BL', 'BU', 'CD', 'CM']
+        column_indexes_white = [
+            column_index_from_string(column)
+            for column in column_names_white]
+        
         for col in range(1, ws.max_column + 1):
-            ws.cell(row=row, column=col).fill = fill
-            ws.cell(row=row, column=col).border = border
+            if col in column_indexes_white:
+                    ws.cell(row = row, column = col ).fill = white_fill
+            else:
+                ws.cell(row=row, column=col).fill = fill
+                ws.cell(row=row, column=col).border = border
     
     elif conf_type == 'norm':
         if location == 'V':
@@ -1144,15 +1179,31 @@ def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
                 ws.cell(row=row, column=col).border = border
         else:
             #Columns for Green Column
-            column_names = ['K', 'S', 'AE', 'AN', 'AW', 'BF', 'BO', 'BX','CG','CP']
-            column_indexes = [column_index_from_string(c) for c in column_names]
+            column_names_green = ['K', 'S', 'AE', 'AN', 'AW', 'BF', 'BO', 'BX','CG','CP']
+            column_names_white = ['P', 'Y', 'AK', 'AT', 'BC', 'BL' ,'BU' ,'CD', 'CM']
+            column_indexes_green = [column_index_from_string(c) for c in column_names_green]
+            column_indexes_white = [column_index_from_string(c) for c in column_names_white]
             for col in range(1, ws.max_column + 1):
-                if col in column_indexes:
+                if col in column_indexes_green:
                     ws.cell(row = row, column = col ).fill = order_fill
+                elif col in column_indexes_white:
+                    ws.cell(row = row, column = col ).fill = white_fill
                 else:
                     ws.cell(row=row, column=col).fill = fill
                 
                 ws.cell(row=row, column=col).border = border
+
+def excel_formatting(file):
+    wb = load_workbook(file)
+
+    for sheet in wb.worksheets:
+        sheet.sheet_view.zoomScale = 65
+
+        for row in sheet.iter_rows(min_row=5, max_row=sheet.max_row):
+            for cell in row:
+                cell.alignment = Alignment(horizontal="left")
+
+    logger.info('Formatted Excel')
 
 
 def add_data(file, config, customer, hide_pricing = None, capped='Y'):
@@ -1163,645 +1214,646 @@ def add_data(file, config, customer, hide_pricing = None, capped='Y'):
 
 
 
-    cust_df['SIZE_NUM'] = pd.to_numeric(cust_df['SIZE'], errors='coerce')
-    logger.info(f'Len of Cust DF{len(cust_df)}')
+    # cust_df['SIZE_NUM'] = pd.to_numeric(cust_df['SIZE'], errors='coerce')
+    # logger.info(f'Len of Cust DF{len(cust_df)}')
 
-    logger.info(f'Columns for customer: {cust_df.columns}')
-    currency_format = '"$"#,##0.00'
-    try:
+    # logger.info(f'Columns for customer: {cust_df.columns}')
+    # currency_format = '"$"#,##0.00'
+    # try:
         
-        highlight_fill = PatternFill(
-            start_color="d9d9d9",
-            end_color="d9d9d9",
-            fill_type="solid"
-        )
-        normal_fill = PatternFill(
-            start_color="BBDDFC",
-            end_color="BBDDFC",
-            fill_type="solid"
-        )
-        yellow_fill = PatternFill(
-            start_color="ffff99",
-            end_color="ffff99",
-            fill_type="solid"
-        )
-        white_fill= PatternFill(
-            start_color="ffffff",
-            end_color="ffffff",
-            fill_type="solid"
-        )
+    #     highlight_fill = PatternFill(
+    #         start_color="d9d9d9",
+    #         end_color="d9d9d9",
+    #         fill_type="solid"
+    #     )
+    #     normal_fill = PatternFill(
+    #         start_color="BBDDFC",
+    #         end_color="BBDDFC",
+    #         fill_type="solid"
+    #     )
+    #     yellow_fill = PatternFill(
+    #         start_color="ffff99",
+    #         end_color="ffff99",
+    #         fill_type="solid"
+    #     )
+    #     white_fill= PatternFill(
+    #         start_color="ffffff",
+    #         end_color="ffffff",
+    #         fill_type="solid"
+    #     )
 
-        if loc_code == 'V':
-            clean_file = "format_excel/V_clean.xlsx"
-            logger.info(f'Customer {customer}, using clean file: {clean_file}')
+    #     if loc_code == 'V':
+    #         clean_file = "format_excel/V_clean.xlsx"
+    #         logger.info(f'Customer {customer}, using clean file: {clean_file}')
             
-            wb = load_workbook(clean_file)
-            template_ws = wb.active
-            start_row = 6
-            start_col =1
+    #         wb = load_workbook(clean_file)
+    #         template_ws = wb.active
+    #         start_row = 6
+    #         start_col =1
 
-            #First Sheet
-            ws_size = wb.create_sheet(title='By Size')
-            copy_template(template_ws, ws_size)
-            filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
-            logger.info(f'Len of filtered_bysize {len(filtered_bysize)}')
+    #         #First Sheet
+    #         ws_size = wb.create_sheet(title='By Size')
+    #         copy_template(template_ws, ws_size)
+    #         filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
+    #         logger.info(f'Len of filtered_bysize {len(filtered_bysize)}')
             
-            prev_size = None
-            current_row = start_row
+    #         prev_size = None
+    #         current_row = start_row
 
-            for r, row in filtered_bysize.iterrows():
+    #         for r, row in filtered_bysize.iterrows():
                 
-                if prev_size is not None and row['SIZE_NUM'] != prev_size:
-                    ws_size.insert_rows(current_row)
-                    fill_rows(ws_size, current_row, highlight_fill, 1, loc_code)
-                    current_row += 1  # move to the new row after insertion
-                    logger.info(f'Appending row prev size: {prev_size}, {r}')
+    #             if prev_size is not None and row['SIZE_NUM'] != prev_size:
+    #                 ws_size.insert_rows(current_row)
+    #                 fill_rows(ws_size, current_row, highlight_fill, 1, loc_code)
+    #                 current_row += 1  # move to the new row after insertion
+    #                 logger.info(f'Appending row prev size: {prev_size}, {r}')
 
-                for col_letter, col_config in mapping_excel.V_col_map.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.V_col_map.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    ws_size.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 ws_size.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(ws_size, current_row, row_fill, 0, loc_code)
+    #             fill_rows(ws_size, current_row, row_fill, 0, loc_code)
 
 
-                prev_size = row['SIZE_NUM']
-                current_row += 1
+    #             prev_size = row['SIZE_NUM']
+    #             current_row += 1
 
-            logger.info(f'Added {customer} by size data to excel file')
+    #         logger.info(f'Added {customer} by size data to excel file')
 
-            #----------------------------------------------------------------------------------------------------------------#
+    #         #----------------------------------------------------------------------------------------------------------------#
 
-            #New Sheet
-            ws_brand = wb.create_sheet(title='By Brand')
-            #copying template
-            copy_template(template_ws, ws_brand)
-            cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
-            filtered_bybrand = cust_df.sort_values(by='BRAND', ascending=True).reset_index(drop=True)
-            logger.info(f'Len of filtered_bybrand {len(filtered_bybrand)}')
+    #         #New Sheet
+    #         ws_brand = wb.create_sheet(title='By Brand')
+    #         #copying template
+    #         copy_template(template_ws, ws_brand)
+    #         cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
+    #         filtered_bybrand = cust_df.sort_values(by='BRAND', ascending=True).reset_index(drop=True)
+    #         logger.info(f'Len of filtered_bybrand {len(filtered_bybrand)}')
 
-            current_row = start_row
-            prev_brand = None 
+    #         current_row = start_row
+    #         prev_brand = None 
 
-            for r, row in filtered_bybrand.iterrows():
-                if prev_brand is not None and row['BRAND'] != prev_brand:
-                    ws_brand.insert_rows(current_row)
-                    fill_rows(ws_brand, current_row, highlight_fill, 1, loc_code)
+    #         for r, row in filtered_bybrand.iterrows():
+    #             if prev_brand is not None and row['BRAND'] != prev_brand:
+    #                 ws_brand.insert_rows(current_row)
+    #                 fill_rows(ws_brand, current_row, highlight_fill, 1, loc_code)
                     
-                    current_row += 1
+    #                 current_row += 1
 
-                for col_letter, col_config in mapping_excel.V_col_map.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.V_col_map.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    ws_brand.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 ws_brand.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(ws_brand, current_row, row_fill, 0,loc_code)
+    #             fill_rows(ws_brand, current_row, row_fill, 0,loc_code)
 
-                prev_brand = row['BRAND']
-                current_row += 1
+    #             prev_brand = row['BRAND']
+    #             current_row += 1
 
-            logger.info(f'Added {customer} by brand data to excel file')
+    #         logger.info(f'Added {customer} by brand data to excel file')
 
-            result_file = f'result/{customer} California Specials {datetoday}.xlsx'
+    #         result_file = f'result/{customer} California Specials {datetoday}.xlsx'
             
-            wb.save(result_file)
+    #         wb.save(result_file)
 
-            #---- Process extra formatting ----#
+    #         #---- Process extra formatting ----#
 
-            hide_columns(result_file, ['P' , 'O'])
-            apply_currency_format(result_file,['J','L', 'M'])
+    #         hide_columns(result_file, ['P' , 'O'])
+    #         apply_currency_format(result_file,['J','L', 'M'])
 
-            if hide_pricing == 'Y':
-                hide_columns(result_file, ['J', 'L', 'M'])
-                logger.info(f'Hide pricing for customer: {customer}')
-            delete_first_sheet(result_file)
+    #         if hide_pricing == 'Y':
+    #             hide_columns(result_file, ['J', 'L', 'M'])
+    #             logger.info(f'Hide pricing for customer: {customer}')
+    #         delete_first_sheet(result_file)
 
-        #----------------------------------------------------------------------------------------------------------------#
-        #----------------------------------------------------------------------------------------------------------------#
-        #----------------------------------------------------------------------------------------------------------------#
+    #     #----------------------------------------------------------------------------------------------------------------#
+    #     #----------------------------------------------------------------------------------------------------------------#
+    #     #----------------------------------------------------------------------------------------------------------------#
         
-        #If all warehuose    
-        elif loc_code == 'VLK':
-            clean_file = 'format_excel/VLK_clean.xlsx'
-            logger.info(f'Customer {customer}, using clean file: {clean_file}')
+    #     #If all warehuose    
+    #     elif loc_code == 'VLK':
+    #         clean_file = 'format_excel/VLK_clean.xlsx'
+    #         logger.info(f'Customer {customer}, using clean file: {clean_file}')
             
-            wb = load_workbook(clean_file)
-            template_ws = wb.active
-            start_row = 6
-            start_col =1
+    #         wb = load_workbook(clean_file)
+    #         template_ws = wb.active
+    #         start_row = 6
+    #         start_col =1
 
-            #First Sheet
-            ws_size = wb.create_sheet(title='By Size')
-            copy_template(template_ws, ws_size)
-            filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
-            logger.info(f'Len of filtered_bysize {len(filtered_bysize)}')
+    #         #First Sheet
+    #         ws_size = wb.create_sheet(title='By Size')
+    #         copy_template(template_ws, ws_size)
+    #         filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
+    #         logger.info(f'Len of filtered_bysize {len(filtered_bysize)}')
 
-            prev_size = None
-            current_row = start_row
+    #         prev_size = None
+    #         current_row = start_row
            
-            for r, row in filtered_bysize.iterrows():
+    #         for r, row in filtered_bysize.iterrows():
 
-                if prev_size is not None and row['SIZE_NUM'] != prev_size:
-                    ws_size.insert_rows(current_row)
-                    fill_rows(ws_size, current_row, highlight_fill, 1,loc_code)
-                    current_row += 1  # move to the new row after insertion
-                    logger.info(f'Appending row prev size: {prev_size}, {r}')
+    #             if prev_size is not None and row['SIZE_NUM'] != prev_size:
+    #                 ws_size.insert_rows(current_row)
+    #                 fill_rows(ws_size, current_row, highlight_fill, 1,loc_code)
+    #                 current_row += 1  # move to the new row after insertion
+    #                 logger.info(f'Appending row prev size: {prev_size}, {r}')
 
                 
-                for col_letter, col_config in mapping_excel.VLK_col_map.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.VLK_col_map.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    ws_size.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 ws_size.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(ws_size, current_row, row_fill, 0,loc_code)
+    #             fill_rows(ws_size, current_row, row_fill, 0,loc_code)
 
-                prev_size = row['SIZE_NUM']
-                current_row += 1
+    #             prev_size = row['SIZE_NUM']
+    #             current_row += 1
 
 
-            logger.info(f'Added {customer} by size data to excel file')
+    #         logger.info(f'Added {customer} by size data to excel file')
 
-            #----------------------------------------------------------------------------------------------------------------#
+    #         #----------------------------------------------------------------------------------------------------------------#
             
-            #New Sheet
-            ws_brand = wb.create_sheet(title='By Brand')
-            #copying template
-            copy_template(template_ws, ws_brand)
-            cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
+    #         #New Sheet
+    #         ws_brand = wb.create_sheet(title='By Brand')
+    #         #copying template
+    #         copy_template(template_ws, ws_brand)
+    #         cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
 
-            filtered_bybrand = cust_df.sort_values(by=['BRAND'],ascending=True).reset_index(drop=True)
-            logger.info(f'Len of filtered_bybrand {len(filtered_bybrand)}')
+    #         filtered_bybrand = cust_df.sort_values(by=['BRAND'],ascending=True).reset_index(drop=True)
+    #         logger.info(f'Len of filtered_bybrand {len(filtered_bybrand)}')
 
-            prev_brand = None
+    #         prev_brand = None
 
-            current_row = start_row
+    #         current_row = start_row
             
 
-            for r, row in filtered_bybrand.iterrows():
+    #         for r, row in filtered_bybrand.iterrows():
 
-                if prev_brand is not None and row['BRAND'] != prev_brand:
-                    ws_brand.insert_rows(current_row)
-                    fill_rows(ws_brand, current_row, highlight_fill, 1, loc_code)
-                    current_row += 1
+    #             if prev_brand is not None and row['BRAND'] != prev_brand:
+    #                 ws_brand.insert_rows(current_row)
+    #                 fill_rows(ws_brand, current_row, highlight_fill, 1, loc_code)
+    #                 current_row += 1
                 
-                for col_letter, col_config in mapping_excel.VLK_col_map.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.VLK_col_map.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    ws_brand.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 ws_brand.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
                 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(ws_brand, current_row, row_fill, 0, loc_code)
-                prev_brand = row['BRAND']
-                current_row += 1
+    #             fill_rows(ws_brand, current_row, row_fill, 0, loc_code)
+    #             prev_brand = row['BRAND']
+    #             current_row += 1
                 
                 
 
-            result_file = f'result/{customer} California, Pennsylvania, Kentucky, Carrolton, Apopka and Fort Worth Specials {datetoday}.xlsx'
-            logger.info(f'Added {customer} by brand data to excel file')
+    #         result_file = f'result/{customer} California, Pennsylvania, Kentucky, Carrolton, Apopka and Fort Worth Specials {datetoday}.xlsx'
+    #         logger.info(f'Added {customer} by brand data to excel file')
             
-            wb.save(result_file)
+    #         wb.save(result_file)
 
-            #---- Process extra formatting ----#
-            hide_columns(result_file, ['BB', 'O', 'X', 'AI', 'AR', 'Y', 'AK' ,'AT', 'Z', 'AA','AB', 'BB','BJ','BK','BL','BM', 'BN', 'BO', 'BP', 'BQ','BR', 'BS', 'BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC'])
-            apply_currency_format(result_file, ['J','L','M','R','T','U','AD','AF','AG','AM','AO','AP','AV','AX','AY'])
-            if hide_pricing == 'Y':
-                hide_columns(result_file, ['J','L','M','R','T','U','AD','AF','AG','AM','AO','AP','AV','AX','AY'])
-                logger.info(f'Hide pricing for customer: {customer}')
-            delete_first_sheet(result_file)
+    #         #---- Process extra formatting ----#
+    #         hide_columns(result_file, ['BB', 'O', 'X', 'AI', 'AR', 'Y', 'AK' ,'AT', 'Z', 'AA','AB', 'BB','BJ','BK','BL','BM', 'BN', 'BO', 'BP', 'BQ','BR', 'BS', 'BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC'])
+    #         apply_currency_format(result_file, ['J','L','M','R','T','U','AD','AF','AG','AM','AO','AP','AV','AX','AY'])
+    #         if hide_pricing == 'Y':
+    #             hide_columns(result_file, ['J','L','M','R','T','U','AD','AF','AG','AM','AO','AP','AV','AX','AY'])
+    #             logger.info(f'Hide pricing for customer: {customer}')
+    #         delete_first_sheet(result_file)
         
-        #----------------------------------------------------------------------------------------------------------------#
-        #----------------------------------------------------------------------------------------------------------------#
-        #----------------------------------------------------------------------------------------------------------------#
+    #     #----------------------------------------------------------------------------------------------------------------#
+    #     #----------------------------------------------------------------------------------------------------------------#
+    #     #----------------------------------------------------------------------------------------------------------------#
 
-        #For Point S
-        elif loc_code == 'PS':
-            clean_file = r'format_excel/PointS.xlsx'
-            logger.info(f'Customer {customer}, using clean file: {clean_file}')
+    #     #For Point S
+    #     elif loc_code == 'PS':
+    #         clean_file = r'format_excel/PointS.xlsx'
+    #         logger.info(f'Customer {customer}, using clean file: {clean_file}')
 
-            wb = load_workbook(clean_file)
-            LTL_template_ws = wb['LTL']
-            LTL_ws_size = wb.create_sheet(title='LTL_By Size')
-            copy_template(LTL_template_ws, LTL_ws_size)
-            start_row = 6
+    #         wb = load_workbook(clean_file)
+    #         LTL_template_ws = wb['LTL']
+    #         LTL_ws_size = wb.create_sheet(title='LTL_By Size')
+    #         copy_template(LTL_template_ws, LTL_ws_size)
+    #         start_row = 6
 
-            filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
+    #         filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
             
-            prev_size = None
+    #         prev_size = None
 
-            for r, row in filtered_bysize.iterrows():
+    #         for r, row in filtered_bysize.iterrows():
                 
-                current_row = start_row + r
+    #             current_row = start_row + r
 
-                for col_letter, col_config in mapping_excel.ps_LTL.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.ps_LTL.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    LTL_ws_size.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 LTL_ws_size.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(LTL_ws_size, current_row, row_fill, 0, loc_code, 'LTL')
+    #             fill_rows(LTL_ws_size, current_row, row_fill, 0, loc_code, 'LTL')
 
                                 
-                if prev_size is not None and row['SIZE_NUM'] != prev_size:
-                    LTL_ws_size.insert_rows(current_row)
-                    fill_rows(LTL_ws_size, current_row, highlight_fill, 1, loc_code)
-                    current_row += 1  # move to the new row after insertion
-                    logger.info(f'Appending row prev size: {prev_size}, {r}')
+    #             if prev_size is not None and row['SIZE_NUM'] != prev_size:
+    #                 LTL_ws_size.insert_rows(current_row)
+    #                 fill_rows(LTL_ws_size, current_row, highlight_fill, 1, loc_code)
+    #                 current_row += 1  # move to the new row after insertion
+    #                 logger.info(f'Appending row prev size: {prev_size}, {r}')
                         
 
-                prev_size = row['SIZE_NUM']
+    #             prev_size = row['SIZE_NUM']
 
-            logger.info(f'Added {customer} by size data to excel file')
+    #         logger.info(f'Added {customer} by size data to excel file')
 
-            #----------------------------------------------------------------------------------------------------------------#
+    #         #----------------------------------------------------------------------------------------------------------------#
 
-            #New Sheet
-            LTL_ws_brand = wb.create_sheet(title='LTL_By Brand')
-            #copying template
-            copy_template(LTL_template_ws, LTL_ws_brand)
-            cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
-            filtered_bybrand = cust_df.sort_values(by='BRAND', ascending=True).reset_index(drop=True)
+    #         #New Sheet
+    #         LTL_ws_brand = wb.create_sheet(title='LTL_By Brand')
+    #         #copying template
+    #         copy_template(LTL_template_ws, LTL_ws_brand)
+    #         cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
+    #         filtered_bybrand = cust_df.sort_values(by='BRAND', ascending=True).reset_index(drop=True)
 
-            current_row = start_row
-            prev_brand = None 
+    #         current_row = start_row
+    #         prev_brand = None 
 
-            for r, row in filtered_bybrand.iterrows():
-                if prev_brand is not None and row['BRAND'] != prev_brand:
-                    LTL_ws_brand.insert_rows(current_row)
-                    fill_rows(LTL_ws_brand, current_row, highlight_fill, 1, loc_code)
-                    current_row += 1
+    #         for r, row in filtered_bybrand.iterrows():
+    #             if prev_brand is not None and row['BRAND'] != prev_brand:
+    #                 LTL_ws_brand.insert_rows(current_row)
+    #                 fill_rows(LTL_ws_brand, current_row, highlight_fill, 1, loc_code)
+    #                 current_row += 1
 
-                for col_letter, col_config in mapping_excel.ps_LTL.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.ps_LTL.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    LTL_ws_brand.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 LTL_ws_brand.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(LTL_ws_brand, current_row, row_fill, 0,loc_code, 'LTL')
+    #             fill_rows(LTL_ws_brand, current_row, row_fill, 0,loc_code, 'LTL')
 
-                prev_brand = row['BRAND']
-                current_row += 1
+    #             prev_brand = row['BRAND']
+    #             current_row += 1
 
 
-            logger.info(f'Added {customer} by brand data to excel file')
+    #         logger.info(f'Added {customer} by brand data to excel file')
 
-            result_file = f'result/{customer} Specials {datetoday}.xlsx'
-            wb.save(result_file)
+    #         result_file = f'result/{customer} Specials {datetoday}.xlsx'
+    #         wb.save(result_file)
 
-            #---- Process extra formatting ----#
+    #         #---- Process extra formatting ----#
             
             
 
-            #-----------------------------------------------------------#
-            #-----------------------------------------------------------#
+    #         #-----------------------------------------------------------#
+    #         #-----------------------------------------------------------#
 
-            TL_template_ws = wb['Trailer_Loads']
-            TL_ws_size = wb.create_sheet(title='TL_By Size')
-            copy_template(TL_template_ws, TL_ws_size)
-            start_row = 6
+    #         TL_template_ws = wb['Trailer_Loads']
+    #         TL_ws_size = wb.create_sheet(title='TL_By Size')
+    #         copy_template(TL_template_ws, TL_ws_size)
+    #         start_row = 6
 
-            filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
+    #         filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
             
-            prev_size = None
+    #         prev_size = None
 
-            for r, row in filtered_bysize.iterrows():
+    #         for r, row in filtered_bysize.iterrows():
                 
-                current_row = start_row + r
+    #             current_row = start_row + r
 
-                for col_letter, col_config in mapping_excel.ps_TL.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.ps_TL.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    TL_ws_size.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 TL_ws_size.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(TL_ws_size, current_row, row_fill, 0, loc_code, 'TL')
+    #             fill_rows(TL_ws_size, current_row, row_fill, 0, loc_code, 'TL')
 
                                 
-                if prev_size is not None and row['SIZE_NUM'] != prev_size:
-                    TL_ws_size.insert_rows(current_row)
-                    fill_rows(TL_ws_size, current_row, highlight_fill, 1, loc_code)
-                    current_row += 1  # move to the new row after insertion
-                    logger.info(f'Appending row prev size: {prev_size}, {r}')
+    #             if prev_size is not None and row['SIZE_NUM'] != prev_size:
+    #                 TL_ws_size.insert_rows(current_row)
+    #                 fill_rows(TL_ws_size, current_row, highlight_fill, 1, loc_code)
+    #                 current_row += 1  # move to the new row after insertion
+    #                 logger.info(f'Appending row prev size: {prev_size}, {r}')
                         
 
-                prev_size = row['SIZE_NUM']
+    #             prev_size = row['SIZE_NUM']
 
-            logger.info(f'Added {customer} by size data to excel file')
+    #         logger.info(f'Added {customer} by size data to excel file')
 
-            #-----------------------------------------------------------------------------------------------#
+    #         #-----------------------------------------------------------------------------------------------#
 
-            TL_ws_brand = wb.create_sheet(title='TL_By Brand')
-            #copying template
-            copy_template(TL_template_ws, TL_ws_brand)
-            cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
-            filtered_bybrand = cust_df.sort_values(by='BRAND', ascending=True).reset_index(drop=True)
+    #         TL_ws_brand = wb.create_sheet(title='TL_By Brand')
+    #         #copying template
+    #         copy_template(TL_template_ws, TL_ws_brand)
+    #         cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
+    #         filtered_bybrand = cust_df.sort_values(by='BRAND', ascending=True).reset_index(drop=True)
 
-            current_row = start_row
-            prev_brand = None 
+    #         current_row = start_row
+    #         prev_brand = None 
 
-            for r, row in filtered_bybrand.iterrows():
-                if prev_brand is not None and row['BRAND'] != prev_brand:
-                    TL_ws_brand.insert_rows(current_row)
-                    fill_rows(TL_ws_brand, current_row, highlight_fill, 1, loc_code)
-                    current_row += 1
+    #         for r, row in filtered_bybrand.iterrows():
+    #             if prev_brand is not None and row['BRAND'] != prev_brand:
+    #                 TL_ws_brand.insert_rows(current_row)
+    #                 fill_rows(TL_ws_brand, current_row, highlight_fill, 1, loc_code)
+    #                 current_row += 1
 
-                for col_letter, col_config in mapping_excel.ps_TL.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.ps_TL.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    TL_ws_brand.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 TL_ws_brand.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(TL_ws_brand, current_row, row_fill, 0,loc_code, 'TL')
+    #             fill_rows(TL_ws_brand, current_row, row_fill, 0,loc_code, 'TL')
 
-                prev_brand = row['BRAND']
-                current_row += 1
+    #             prev_brand = row['BRAND']
+    #             current_row += 1
 
 
-            logger.info(f'Added {customer} by brand data to excel file')
+    #         logger.info(f'Added {customer} by brand data to excel file')
 
-            wb.save(result_file)
+    #         wb.save(result_file)
 
-            #---- Process extra formatting ----#
+    #         #---- Process extra formatting ----#
             
-            hide_columns(result_file, ['L','M','N','X','Y','Z','AA','AI','AJ','AK','AL','BA','BB','BC','BD','BE','BF','BG','BH','BI','BJ','BK','AU','AV','AW','AX','AY','AZ','BL','BM','BN','BO','BP','BQ','BR', 'BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC'], ['TL_By Size', 'TL_By Brand'])
-            apply_currency_format(result_file, ['I','K','O','S','U','V','AD','AF','AG','AO','AQ','AR'], ['TL_By Size', 'TL_By Brand'])
+    #         hide_columns(result_file, ['L','M','N','X','Y','Z','AA','AI','AJ','AK','AL','BA','BB','BC','BD','BE','BF','BG','BH','BI','BJ','BK','AU','AV','AW','AX','AY','AZ','BL','BM','BN','BO','BP','BQ','BR', 'BS','BT','BU','BV','BW','BX','BY','BZ','CA','CB','CC'], ['TL_By Size', 'TL_By Brand'])
+    #         apply_currency_format(result_file, ['I','K','O','S','U','V','AD','AF','AG','AO','AQ','AR'], ['TL_By Size', 'TL_By Brand'])
 
-            hide_columns(result_file, ['I','J','K','S', 'T', 'U', 'AB', 'AD','AE','AF'], ['LTL_By Size', 'LTL_By Brand'])
-            apply_currency_format(result_file, ['L','N','O','V','X','Y','AG','AI','AJ','AN','AP','AQ'], ['LTL_By Size', 'LTL_By Brand'])
-            delete_first_sheet(result_file, 'LTL')
-            delete_first_sheet(result_file, 'Trailer_Loads')
+    #         hide_columns(result_file, ['I','J','K','S', 'T', 'U', 'AB', 'AD','AE','AF'], ['LTL_By Size', 'LTL_By Brand'])
+    #         apply_currency_format(result_file, ['L','N','O','V','X','Y','AG','AI','AJ','AN','AP','AQ'], ['LTL_By Size', 'LTL_By Brand'])
+    #         delete_first_sheet(result_file, 'LTL')
+    #         delete_first_sheet(result_file, 'Trailer_Loads')
         
-        else:
-            logger.info(f'Customer using a dynamic Location Code:')
-            clean_file = 'format_excel/Ware_Gen_clean.xlsx'
-            logger.info(f'Customer {customer}, using clean file: {clean_file}')
-            logger.info(f'Cust df Col: {cust_df.columns}')
+    #     else:
+    #         logger.info(f'Customer using a dynamic Location Code:')
+    #         clean_file = 'format_excel/Ware_Gen_clean.xlsx'
+    #         logger.info(f'Customer {customer}, using clean file: {clean_file}')
+    #         logger.info(f'Cust df Col: {cust_df.columns}')
             
-            #These are the columns that will be unhidden in the final excel file
-            col_to_unhide = []
-            location_list_str = []
+    #         #These are the columns that will be unhidden in the final excel file
+    #         col_to_unhide = []
+    #         location_list_str = []
 
-            #Location Code into a list to be consolidate columns to be unhidden
-            list_loc_code = list(loc_code.upper())
+    #         #Location Code into a list to be consolidate columns to be unhidden
+    #         list_loc_code = list(loc_code.upper())
 
-            for loc in list_loc_code:
-                if loc == 'V':
-                    col_to_unhide.extend(['I','J','K','L','M'])
-                    location_list_str.append("California")
-                if loc == 'L':
-                    col_to_unhide.extend(['P','Q','R','S','T','U','V'])
-                    location_list_str.append("Pennsylvania")
-                if loc == 'K':
-                    col_to_unhide.extend(['Y','AC','AD','AE','AF','AG','AH'])
-                    location_list_str.append("Kentucky")
-                if loc == 'C':
-                    col_to_unhide.extend(['AK','AL','AM','AN','AO','AP','AQ'])
-                    location_list_str.append("Carrolton") 
-                if loc == 'F':
-                    col_to_unhide.extend(['AT','AU','AV','AW','AX','AY','AZ','BA'])
-                    location_list_str.append("Fort Worth")
-                if loc == 'A':
-                    col_to_unhide.extend(['BC','BD','BE','BF','BG','BH','BI','BJ'])
-                    location_list_str.append("Apopka")
-                if loc == 'W':
-                    col_to_unhide.extend(['BL','BM','BN','BO','BP','BQ', 'BR','BS'])
-                    location_list_str.append("Winchester")
-                if loc == 'M':
-                    col_to_unhide.extend(['BU','BV','BW','BX','BY','BZ','CA','CB'])
-                    location_list_str.append("Miami")
-                if loc == 'B':
-                    col_to_unhide.extend(['CD','CE','CF','CG','CH','CI','CJ','CK'])
-                    location_list_str.append("Bloomsburg")
-                if loc == 'T':
-                    col_to_unhide.extend(['CN','CO','CP','CQ','CR','CS','CT'])
-                    location_list_str.append("Tennesse")
+    #         for loc in list_loc_code:
+    #             if loc == 'V':
+    #                 col_to_unhide.extend(['I','J','K','L','M'])
+    #                 location_list_str.append("California")
+    #             if loc == 'L':
+    #                 col_to_unhide.extend(['P','Q','R','S','T','U','V'])
+    #                 location_list_str.append("Pennsylvania")
+    #             if loc == 'K':
+    #                 col_to_unhide.extend(['Y','AC','AD','AE','AF','AG','AH'])
+    #                 location_list_str.append("Kentucky")
+    #             if loc == 'C':
+    #                 col_to_unhide.extend(['AK','AL','AM','AN','AO','AP','AQ'])
+    #                 location_list_str.append("Carrolton") 
+    #             if loc == 'F':
+    #                 col_to_unhide.extend(['AT','AU','AV','AW','AX','AY','AZ','BA'])
+    #                 location_list_str.append("Fort Worth")
+    #             if loc == 'A':
+    #                 col_to_unhide.extend(['BC','BD','BE','BF','BG','BH','BI','BJ'])
+    #                 location_list_str.append("Apopka")
+    #             if loc == 'W':
+    #                 col_to_unhide.extend(['BL','BM','BN','BO','BP','BQ', 'BR','BS'])
+    #                 location_list_str.append("Winchester")
+    #             if loc == 'M':
+    #                 col_to_unhide.extend(['BU','BV','BW','BX','BY','BZ','CA','CB'])
+    #                 location_list_str.append("Miami")
+    #             if loc == 'B':
+    #                 col_to_unhide.extend(['CD','CE','CF','CG','CH','CI','CJ','CK'])
+    #                 location_list_str.append("Bloomsburg")
+    #             if loc == 'T':
+    #                 col_to_unhide.extend(['CM','CN','CO','CP','CQ','CR','CS','CT'])
+    #                 location_list_str.append("Tennesse")
                 
 
-            # This is in order to make location dynamic in the file name
-            location_str = ', '.join(location_list_str)
-            logger.info(f'Columns to unhide: {col_to_unhide}')
+    #         # This is in order to make location dynamic in the file name
+    #         location_str = ', '.join(location_list_str)
+    #         logger.info(f'Columns to unhide: {col_to_unhide}')
             
 
 
-            wb = load_workbook(clean_file)
-            template_ws = wb.active
-            start_row = 6
-            start_col =1
+    #         wb = load_workbook(clean_file)
+    #         template_ws = wb.active
+    #         start_row = 6
+    #         start_col =1
 
-            #First Sheet
-            ws_size = wb.create_sheet(title='By Size')
-            copy_template(template_ws, ws_size)
-            filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
-            logger.info(f'Len of filtered_bysize {len(filtered_bysize)}')
+    #         #First Sheet
+    #         ws_size = wb.create_sheet(title='By Size')
+    #         copy_template(template_ws, ws_size)
+    #         filtered_bysize = cust_df.sort_values(by='SIZE_NUM', ascending=True).reset_index(drop=True)
+    #         logger.info(f'Len of filtered_bysize {len(filtered_bysize)}')
 
-            prev_size = None
-            current_row = start_row
+    #         prev_size = None
+    #         current_row = start_row
            
-            for r, row in filtered_bysize.iterrows():
+    #         for r, row in filtered_bysize.iterrows():
 
-                if prev_size is not None and row['SIZE_NUM'] != prev_size:
-                    ws_size.insert_rows(current_row)
-                    fill_rows(ws_size, current_row, highlight_fill, 1,loc_code)
-                    current_row += 1  # move to the new row after insertion
-                    logger.info(f'Appending row prev size: {prev_size}, {r}')
+    #             if prev_size is not None and row['SIZE_NUM'] != prev_size:
+    #                 ws_size.insert_rows(current_row)
+    #                 fill_rows(ws_size, current_row, highlight_fill, 1,loc_code)
+    #                 current_row += 1  # move to the new row after insertion
+    #                 logger.info(f'Appending row prev size: {prev_size}, {r}')
 
                 
-                for col_letter, col_config in mapping_excel.Ware_gen_col_map.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.Ware_gen_col_map.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    ws_size.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 ws_size.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(ws_size, current_row, row_fill, 0,loc_code)
+    #             fill_rows(ws_size, current_row, row_fill, 0,loc_code)
 
-                prev_size = row['SIZE_NUM']
-                current_row += 1
+    #             prev_size = row['SIZE_NUM']
+    #             current_row += 1
 
 
-            logger.info(f'Added {customer} by size data to excel file')
+    #         logger.info(f'Added {customer} by size data to excel file')
 
-            #----------------------------------------------------------------------------------------------------------------#
+    #         #----------------------------------------------------------------------------------------------------------------#
             
-            #New Sheet
-            ws_brand = wb.create_sheet(title='By Brand')
-            #copying template
-            copy_template(template_ws, ws_brand)
-            cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
+    #         #New Sheet
+    #         ws_brand = wb.create_sheet(title='By Brand')
+    #         #copying template
+    #         copy_template(template_ws, ws_brand)
+    #         cust_df['BRAND'] = cust_df['BRAND'].apply(normalize).str.upper()
 
-            filtered_bybrand = cust_df.sort_values(by=['BRAND'],ascending=True).reset_index(drop=True)
-            logger.info(f'Len of filtered_bybrand {len(filtered_bybrand)}')
+    #         filtered_bybrand = cust_df.sort_values(by=['BRAND'],ascending=True).reset_index(drop=True)
+    #         logger.info(f'Len of filtered_bybrand {len(filtered_bybrand)}')
 
-            prev_brand = None
+    #         prev_brand = None
 
-            current_row = start_row
+    #         current_row = start_row
             
 
-            for r, row in filtered_bybrand.iterrows():
+    #         for r, row in filtered_bybrand.iterrows():
 
-                if prev_brand is not None and row['BRAND'] != prev_brand:
-                    ws_brand.insert_rows(current_row)
-                    fill_rows(ws_brand, current_row, highlight_fill, 1, loc_code)
-                    current_row += 1
+    #             if prev_brand is not None and row['BRAND'] != prev_brand:
+    #                 ws_brand.insert_rows(current_row)
+    #                 fill_rows(ws_brand, current_row, highlight_fill, 1, loc_code)
+    #                 current_row += 1
                 
-                for col_letter, col_config in mapping_excel.Ware_gen_col_map.items():
-                    if col_config['type'] == 'value':
-                        value = row[col_config['field']]
+    #             for col_letter, col_config in mapping_excel.Ware_gen_col_map.items():
+    #                 if col_config['type'] == 'value':
+    #                     value = row[col_config['field']]
                     
-                    elif col_config['type'] == 'formula':
-                        value = col_config['field'].format(map_cell=current_row)
+    #                 elif col_config['type'] == 'formula':
+    #                     value = col_config['field'].format(map_cell=current_row)
                     
-                    ws_brand.cell(
-                        row = current_row,
-                        column = column_index_from_string(col_letter),
-                        value = value
-                    )
+    #                 ws_brand.cell(
+    #                     row = current_row,
+    #                     column = column_index_from_string(col_letter),
+    #                     value = value
+    #                 )
                 
-                if current_row % 2 == 0:
-                    row_fill = yellow_fill
-                else:
-                    row_fill = white_fill
+    #             if current_row % 2 == 0:
+    #                 row_fill = yellow_fill
+    #             else:
+    #                 row_fill = white_fill
 
-                fill_rows(ws_brand, current_row, row_fill, 0, loc_code)
-                prev_brand = row['BRAND']
-                current_row += 1
+    #             fill_rows(ws_brand, current_row, row_fill, 0, loc_code)
+    #             prev_brand = row['BRAND']
+    #             current_row += 1
                 
                 
 
-            result_file = f'result/{customer} {location_str} Specials {datetoday}.xlsx'
-            logger.info(f'Added {customer} by brand data to excel file')
+    #         result_file = f'result/{customer} {location_str} Specials {datetoday}.xlsx'
+    #         logger.info(f'Added {customer} by brand data to excel file')
             
-            wb.save(result_file)
+    #         wb.save(result_file)
 
-            #---- Process extra formatting ----#
-            hide_columns_range(result_file, 'I', 'DA')
-            unhide_columns(result_file, col_to_unhide)
-            apply_currency_format(result_file, ['J','L','M','R','T','U','AD','AF','AG','AM','AO','AP','AV','AX','AY'])
-            if hide_pricing == 'Y':
-                hide_columns(result_file, ['J','L','M','R','T','U','AD','AF','AG','AM','AO','AP','AV','AX','AY'])
-                logger.info(f'Hide pricing for customer: {customer}')
-            delete_first_sheet(result_file)
-            #For protecting sheet for customers to only edit not unhide columns
-            protect_sheet(result_file, ['K','S','AE','AN','AW','BF','BO', 'BX', 'CG', 'CP'])
+    #         #---- Process extra formatting ----#
+    #         hide_columns_range(result_file, 'I', 'DA')
+    #         unhide_columns(result_file, col_to_unhide)
+    #         apply_currency_format(result_file, ['J','L','M','R','T','U','AD','AF','AG','AM','AO','AP','AV','AX','AY'])
+    #         if hide_pricing == 'Y':
+    #             hide_columns(result_file, ['J','L','M','R','T','U','AD','AF','AG','AM','AO','AP','AV','AX','AY'])
+    #             logger.info(f'Hide pricing for customer: {customer}')
+    #         delete_first_sheet(result_file)
+    #         #For protecting sheet for customers to only edit not unhide columns
+    #         protect_sheet(result_file, ['K','S','AE','AN','AW','BF','BO', 'BX', 'CG', 'CP'])
+    #         excel_formatting(result_file)
 
-        #----- Return result file -----#
-        return result_file
+    #     #----- Return result file -----#
+    #     return result_file
 
     
  
-    except Exception as e:
-        logger.error(f"Error determining clean file for customer '{customer}': {e}")
-        logger.exception(traceback.format_exc())
-        return 
+    # except Exception as e:
+    #     logger.error(f"Error determining clean file for customer '{customer}': {e}")
+    #     logger.exception(traceback.format_exc())
+    #     return 
 
     
 

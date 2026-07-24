@@ -45,8 +45,8 @@ def main():
         try:
             logging.info(f'Processing Customer: {customer}')
             file_to_send = odoo_get.add_data(product_file, cust_conf, cust_conf.get('PRICELIST'), cust_conf.get('HIDE_PRICING'), cust_conf.get('CAPPED'))
-            send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
-            os.remove(file_to_send)
+            # send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
+            # os.remove(file_to_send)
             
         except Exception as e:
             logging.error(f"Error occurred while processing customer: {customer}")
@@ -84,4 +84,4 @@ def selective_trigger(vendors_to_be_processed):
 
 
 if __name__ == "__main__":
-    selective_trigger(['TIREPARTNERSTXWINCHESTER'])
+    main()

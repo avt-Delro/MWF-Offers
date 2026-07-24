@@ -49,7 +49,7 @@ selected_customer = st.selectbox(
 
 if selected_customer:
 
-    customer_info = config[
+    customer_info = config[ 
         config["Customer Name"] == selected_customer
     ].iloc[0]
 

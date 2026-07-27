@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-import logging
+from logging_config import logger
 import traceback
 import smtplib
 
@@ -44,8 +44,8 @@ def to_send_email(
             cust_name = ""
     except Exception:
         cust_name = ""
-        logging.error("Cust Name is not valid")
-        logging.exception(traceback.format_exc())
+        logger.error("Cust Name is not valid")
+        logger.exception(traceback.format_exc())
 
     # Build email body
     if loc_code == "V":
@@ -272,10 +272,10 @@ def to_send_email(
                 msg.as_string()
             )
 
-            logging.info(
+            logger.info(
                 f"File {file} sent to Customer:{send_to} with CCs:{cc_s}"
             )
 
     except Exception as e:
-        logging.error(f"Email send failed: {e}")
-        logging.exception(traceback.format_exc())
+        logger.error(f"Email send failed: {e}")
+        logger.exception(traceback.format_exc())

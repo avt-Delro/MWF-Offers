@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 import time
 
-config = pd.read_excel(env.config_streamlit)
+config = pd.read_excel(env.config_streamlit, engine='openpyxl')
 flyer = env.flyer_file
 product_file = env.product_file
 

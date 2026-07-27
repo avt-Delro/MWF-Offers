@@ -18,7 +18,7 @@ from openpyxl import load_workbook
 from copy import copy
 from openpyxl.cell.cell import MergedCell
 from openpyxl.utils import column_index_from_string, get_column_letter
-from openpyxl.styles import PatternFill, Border, Protection, Side
+from openpyxl.styles import PatternFill, Border, Protection, Side, Alignment
 import traceback
 from format_excel import config_ps_mb, mapping_excel
 
@@ -152,8 +152,6 @@ def normalize(text: str) -> str:
         .replace('‑', '-')        # non-breaking hyphen
         .strip()
     )
-
-
 
 
 #Checks if product is allowed
@@ -470,36 +468,57 @@ def get_odoo_data(file):
         
         logger.info("Fetched %d products from Odoo", len(products_info))
 
-        #Pomona
-        get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
-        groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
-
-        #Carrolton
-        get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
-
-        #Latrobe
-        get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
-
-        #Kentucky
-        get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
+        number_of_tries = 3
         
-        #Fort Worth
-        get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
-        
-        #Apopka
-        get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
-        
-        #Winschester
-        get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
+        for i in range(number_of_tries):
+            try:
+                #Pomona
+                get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
+                groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
 
-        #Hileaeah - Miami
-        get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
+                #Carrolton
+                get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
 
-        #Bloomsburg
-        get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
+                #Latrobe
+                get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
 
-        #Winchester
-        get_on_hand_quant(file, partnum, 'Package/', 'Tennesse', 2)
+                #Kentucky
+                get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
+                
+                #Fort Worth
+                get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
+                
+                #Apopka
+                get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
+                
+                #Winschester
+                get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
+
+                #Hileaeah - Miami
+                get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
+
+                #Bloomsburg
+                get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
+
+                #Winchester
+                get_on_hand_quant(file, partnum, 'Package/', 'Tennesse', 2)
+
+                #If all successful break the loop
+                break
+
+            except Exception as e:
+                failed_line = traceback.extract_tb(e.__traceback__)[-1]
+    
+                logger.error(f"Error type: {type(e).__name__}")
+                logger.error(f"Error message: {e}")
+                logger.error(f"File: {failed_line.filename}")
+                logger.error(f"Line number: {failed_line.lineno}")
+                logger.error(f"Code: {failed_line.line}")
+                if i == number_of_tries:
+                    logger.error(
+                        "Maximum number of retries reached."
+                    )
+                    pass
 
         pomona_quant = pd.read_excel(file, sheet_name='Pomona')
         carr_quant = pd.read_excel(file, sheet_name='Carrolton')
@@ -870,10 +889,10 @@ def populate_data(file, config, customer, capped):
     #Filtering data that are 8 and up inventory
     filter_df = return_df[(return_df[warehouse_cols] >= 8).any(axis=1)]
 
-    # create_sheet(f'no_pricelist/data_no_pricelist_5.xlsx', list_no_pricelist, f'{customer}')
-
+    # create_sheet(f'no_pricelist/data_no_pricelist_6.xlsx', list_no_pricelist, f'{customer}')
 
     return filter_df
+    
 # for data in config['Customer Name']:
 #     populate_data('output/price_update.xlsx', data)
 #populate_data(product_file, 'G_TOWNFAIR')
@@ -998,6 +1017,7 @@ def protect_sheet(file, cols_to_unlock):
 
     for ws in wb.worksheets: 
     #Protect sheet (still blocks unhide)
+        ws.sheet_view.zoomScale = 70
         ws.protection.sheet = True
         ws.protection.formatColumns = True
     # ✅ Unlock ALL cells
@@ -1006,6 +1026,7 @@ def protect_sheet(file, cols_to_unlock):
                 cell.protection = Protection(locked=False)
         for row in ws.iter_rows(min_row=6):
             for cell in row:
+                cell.alignment = Alignment(horizontal="left")
                 cell.protection = Protection(locked=True)
         
         for cols in cols_to_unlock:
@@ -1096,16 +1117,32 @@ def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
 
     types = ['norm','extra']
     conf_type = types[fill_type]
+
     order_fill = PatternFill(
         start_color= '86cb6b',
         end_color= '86cb6b',
         fill_type='solid'
     )
+    white_fill = PatternFill(
+        start_color= 'FFFFFF',
+        end_color= 'FFFFFF',
+        fill_type='solid'
+    )
 
     if conf_type == 'extra':
+        column_names_white = [
+            'P', 'Y', 'AK', 'AT', 'BC',
+            'BL', 'BU', 'CD', 'CM']
+        column_indexes_white = [
+            column_index_from_string(column)
+            for column in column_names_white]
+        
         for col in range(1, ws.max_column + 1):
-            ws.cell(row=row, column=col).fill = fill
-            ws.cell(row=row, column=col).border = border
+            if col in column_indexes_white:
+                    ws.cell(row = row, column = col ).fill = white_fill
+            else:
+                ws.cell(row=row, column=col).fill = fill
+                ws.cell(row=row, column=col).border = border
     
     elif conf_type == 'norm':
         if location == 'V':
@@ -1144,15 +1181,20 @@ def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
                 ws.cell(row=row, column=col).border = border
         else:
             #Columns for Green Column
-            column_names = ['K', 'S', 'AE', 'AN', 'AW', 'BF', 'BO', 'BX','CG','CP']
-            column_indexes = [column_index_from_string(c) for c in column_names]
+            column_names_green = ['K', 'S', 'AE', 'AN', 'AW', 'BF', 'BO', 'BX','CG','CP']
+            column_names_white = ['P', 'Y', 'AK', 'AT', 'BC', 'BL' ,'BU' ,'CD', 'CM']
+            column_indexes_green = [column_index_from_string(c) for c in column_names_green]
+            column_indexes_white = [column_index_from_string(c) for c in column_names_white]
             for col in range(1, ws.max_column + 1):
-                if col in column_indexes:
+                if col in column_indexes_green:
                     ws.cell(row = row, column = col ).fill = order_fill
+                elif col in column_indexes_white:
+                    ws.cell(row = row, column = col ).fill = white_fill
                 else:
                     ws.cell(row=row, column=col).fill = fill
                 
                 ws.cell(row=row, column=col).border = border
+
 
 
 def add_data(file, config, customer, hide_pricing = None, capped='Y'):
@@ -1671,7 +1713,7 @@ def add_data(file, config, customer, hide_pricing = None, capped='Y'):
                     col_to_unhide.extend(['CD','CE','CF','CG','CH','CI','CJ','CK'])
                     location_list_str.append("Bloomsburg")
                 if loc == 'T':
-                    col_to_unhide.extend(['CN','CO','CP','CQ','CR','CS','CT'])
+                    col_to_unhide.extend(['CM','CN','CO','CP','CQ','CR','CS','CT'])
                     location_list_str.append("Tennesse")
                 
 

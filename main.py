@@ -84,4 +84,4 @@ def selective_trigger(vendors_to_be_processed):
 
 
 if __name__ == "__main__":
-    main()
+    selective_trigger(['ACETIREMIAMI'])

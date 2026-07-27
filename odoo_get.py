@@ -808,7 +808,7 @@ def populate_data(file, config, customer, capped):
             logger.warning(
                 f"No {customer} price rules found for default_code={default_code} not adding it to the output"
             )
-            list_no_pricelist.append({customer: default_code})
+            # list_no_pricelist.append({customer: default_code})
 
             continue
     
@@ -889,7 +889,7 @@ def populate_data(file, config, customer, capped):
     #Filtering data that are 8 and up inventory
     filter_df = return_df[(return_df[warehouse_cols] >= 8).any(axis=1)]
 
-    create_sheet(f'no_pricelist/data_no_pricelist_6.xlsx', list_no_pricelist, f'{customer}')
+    # create_sheet(f'no_pricelist/data_no_pricelist_6.xlsx', list_no_pricelist, f'{customer}')
 
     return filter_df
     
@@ -1017,6 +1017,7 @@ def protect_sheet(file, cols_to_unlock):
 
     for ws in wb.worksheets: 
     #Protect sheet (still blocks unhide)
+        ws.sheet_view.zoomScale = 70
         ws.protection.sheet = True
         ws.protection.formatColumns = True
     # ✅ Unlock ALL cells
@@ -1025,6 +1026,7 @@ def protect_sheet(file, cols_to_unlock):
                 cell.protection = Protection(locked=False)
         for row in ws.iter_rows(min_row=6):
             for cell in row:
+                cell.alignment = Alignment(horizontal="left")
                 cell.protection = Protection(locked=True)
         
         for cols in cols_to_unlock:
@@ -1193,17 +1195,6 @@ def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
                 
                 ws.cell(row=row, column=col).border = border
 
-def excel_formatting(file):
-    wb = load_workbook(file)
-
-    for sheet in wb.worksheets:
-        sheet.sheet_view.zoomScale = 65
-
-        for row in sheet.iter_rows(min_row=5, max_row=sheet.max_row):
-            for cell in row:
-                cell.alignment = Alignment(horizontal="left")
-
-    logger.info('Formatted Excel')
 
 
 def add_data(file, config, customer, hide_pricing = None, capped='Y'):
@@ -1843,7 +1834,6 @@ def add_data(file, config, customer, hide_pricing = None, capped='Y'):
             delete_first_sheet(result_file)
             #For protecting sheet for customers to only edit not unhide columns
             protect_sheet(result_file, ['K','S','AE','AN','AW','BF','BO', 'BX', 'CG', 'CP'])
-            excel_formatting(result_file)
 
         #----- Return result file -----#
         return result_file

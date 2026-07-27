@@ -264,7 +264,11 @@ def to_send_email(
             recipients = [send_to]
 
             if cc_s:
-                recipients.append(cc_s)
+                recipients.extend(
+                    email.strip()
+                    for email in cc_s.split(";")
+                    if email.strip()
+                )
 
             server.sendmail(
                 email_user,

@@ -30,7 +30,6 @@ strapping_file = env.strapping_file
 load_dotenv()
 
 
-
 datetoday = datetime.now().strftime("%Y-%m-%d")
 
 '''
@@ -47,7 +46,7 @@ ODOO_USERNAME_B2B_jetstar = env.odoo_username_jetstar
 ODOO_PASSWORD_B2B_jetstar = env.odoo_api_jetstar
 
 # context = ssl._create_unverified_context()
- 
+
 # common = xmlrpc.client.ServerProxy(
 #     f"{ODOO_URL_B2B}/xmlrpc/2/common",
 #     context=context
@@ -154,8 +153,8 @@ def normalize(text: str) -> str:
     )
 
 
-#Checks if product is allowed
-#def is_product_allowed(config_lookup, main_df):
+# Checks if product is allowed
+# def is_product_allowed(config_lookup, main_df):
 #     if config_lookup['NAME'] != 'Point S Tire':
 #         arroyo = config_lookup['ARROYO']
 #         ars = config_lookup['ARS']
@@ -210,9 +209,8 @@ def normalize(text: str) -> str:
 
 #     else:
 #         filtered_df = main_df[main_df['BRAND'].isin(config_ps.point_s_allowed_brand)]
-    
-#     return filtered_df
 
+#     return filtered_df
 
 
 def is_product_allowed(config, df):
@@ -284,7 +282,7 @@ def is_product_allowed(config, df):
         (df['WEIGHTS'] != 'None')
     ]
 
-#Returns df that filters allowed product
+# Returns df that filters allowed product
 def identify_prod_to_add(file, config, customer):
     products_df = pd.read_excel(file, sheet_name='Sheet2')
         #Normalize column names
@@ -301,7 +299,7 @@ def identify_prod_to_add(file, config, customer):
         logger.error(f"Error processing config for customer '{customer}': {e}")
         return
 
-#Return the last number from search size since it is used in filtering
+# Return the last number from search size since it is used in filtering
 def get_last_number(tire_size):
     
     if not tire_size:   # ✅ handles None, '', False
@@ -333,7 +331,7 @@ def groupby_je(filepath_exc, column_names, name_of_sheet, get_column):
     
     create_sheet(filepath_exc, code_dictionary, name_of_sheet)
 
-#default_code:: List, loc_key:: String
+# default_code:: List, loc_key:: String
 def get_on_hand_quant(file, default_code, loc_key, sheet_name, odoo_instance):
     if odoo_instance == 1:
         uid, models = get_models()
@@ -399,7 +397,6 @@ def get_on_hand_quant(file, default_code, loc_key, sheet_name, odoo_instance):
         logger.info(f'Product quant: {type(product_quant)}: {product_quant}')
         
         create_sheet(file, product_quant, sheet_name)
-        
 
 
 def df_to_qty_map(df, product_col, qty_col='available_quantity'):
@@ -413,8 +410,8 @@ def df_to_qty_map(df, product_col, qty_col='available_quantity'):
         return {}
 
     return dict(zip(df[product_col], df[qty_col]))
-    
-#Get odoo file one time run
+
+# Get odoo file one time run
 def get_odoo_data(file):
     uid, models = get_models()
     try:
@@ -470,35 +467,37 @@ def get_odoo_data(file):
 
         number_of_tries = 3
         
+        
+                #Pomona
+        get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
+        groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
+
+        #Carrolton
+        get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
+
+        #Latrobe
+        get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
+
+        #Kentucky
+        get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
+        
+        #Fort Worth
+        get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
+        
+        #Apopka
+        get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
+        
+        #Winschester
+        get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
+
+        #Hileaeah - Miami
+        get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
+
+        #Bloomsburg
+        get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
+        
         for i in range(number_of_tries):
             try:
-                #Pomona
-                get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
-                groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
-
-                #Carrolton
-                get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
-
-                #Latrobe
-                get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
-
-                #Kentucky
-                get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
-                
-                #Fort Worth
-                get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
-                
-                #Apopka
-                get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
-                
-                #Winschester
-                get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
-
-                #Hileaeah - Miami
-                get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
-
-                #Bloomsburg
-                get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
 
                 #Winchester
                 get_on_hand_quant(file, partnum, 'Package/', 'Tennesse', 2)
@@ -892,10 +891,10 @@ def populate_data(file, config, customer, capped):
     # create_sheet(f'no_pricelist/data_no_pricelist_6.xlsx', list_no_pricelist, f'{customer}')
 
     return filter_df
-    
+
 # for data in config['Customer Name']:
 #     populate_data('output/price_update.xlsx', data)
-#populate_data(product_file, 'G_TOWNFAIR')
+# populate_data(product_file, 'G_TOWNFAIR')
 
 
 # def try_odoo():
@@ -908,12 +907,11 @@ def populate_data(file, config, customer, capped):
 #         [[('default_code', '=', 'AMERICANROADSTARARS4K02')]],
 #         {
 #             'fields': [
-#                 'warehouse_id', 
+#                 'warehouse_id',
 #             ],
 #         }
 #     )
 #     logger.info(f"Fetched:{warehouse}")
-
 
 
 def copy_template(source, target, header_rows=5):
@@ -953,7 +951,7 @@ def copy_template(source, target, header_rows=5):
                 tgt.protection = copy(cell.protection)
                 tgt.alignment = copy(cell.alignment)
 
-#Hide columns
+# Hide columns
 def hide_columns(file, column_names, ws_name:str = None):
     try:
         wb = load_workbook(file)
@@ -1016,23 +1014,13 @@ def protect_sheet(file, cols_to_unlock):
     wb = load_workbook(file)
 
     for ws in wb.worksheets: 
-    #Protect sheet (still blocks unhide)
+        # Protect sheet (still blocks unhide)
         ws.sheet_view.zoomScale = 70
-        ws.protection.sheet = True
-        ws.protection.formatColumns = True
-    # ✅ Unlock ALL cells
-        for row in ws.iter_rows(min_row=1, max_row=5):
-            for cell in row:
-                cell.protection = Protection(locked=False)
+        # ✅ Unlock ALL cells
         for row in ws.iter_rows(min_row=6):
             for cell in row:
-                cell.alignment = Alignment(horizontal="left")
-                cell.protection = Protection(locked=True)
-        
-        for cols in cols_to_unlock:
-            for cell in ws[cols]:
-                cell.protection = Protection(locked=False)    
-        
+                cell.alignment = Alignment(horizontal="left")   
+
     wb.save(file)
 
 # Hide columns by range of columns
@@ -1107,7 +1095,6 @@ def delete_first_sheet(file, sheetname = 'Sheet1'):
     ws= wb[sheetname]
     wb.remove(ws)
     wb.save(file)
-
 
 
 def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
@@ -1194,7 +1181,6 @@ def fill_rows(ws, row, fill, fill_type: int, location, ps_type = None):
                     ws.cell(row=row, column=col).fill = fill
                 
                 ws.cell(row=row, column=col).border = border
-
 
 
 def add_data(file, config, customer, hide_pricing = None, capped='Y'):
@@ -1686,7 +1672,7 @@ def add_data(file, config, customer, hide_pricing = None, capped='Y'):
 
             for loc in list_loc_code:
                 if loc == 'V':
-                    col_to_unhide.extend(['I','J','K','L','M'])
+                    col_to_unhide.extend(['I','J','K','L','M','N'])
                     location_list_str.append("California")
                 if loc == 'L':
                     col_to_unhide.extend(['P','Q','R','S','T','U','V'])
@@ -1844,8 +1830,3 @@ def add_data(file, config, customer, hide_pricing = None, capped='Y'):
         logger.error(f"Error determining clean file for customer '{customer}': {e}")
         logger.exception(traceback.format_exc())
         return 
-
-    
-
-
-

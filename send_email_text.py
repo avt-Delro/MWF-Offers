@@ -283,3 +283,48 @@ def to_send_email(
     except Exception as e:
         logger.error(f"Email send failed: {e}")
         logger.exception(traceback.format_exc())
+
+
+def send_error_msg(cust_list, send_to, ccs):
+    msg = MIMEMultipart()
+
+    msg["From"] = email_user
+    msg["To"] = send_to
+    msg["CC"] = ccs
+    msg["Subject"] = (
+        f'MWF Error: Please Check '
+    )
+
+    body = f'''
+    The following customers encountered errors:
+    
+    {chr(10).join(cust_list)}
+    '''
+
+    msg.attach(MIMEText(body, "plain"))
+
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(email_user, email_password)
+
+            recipients = [send_to]
+
+            if ccs:
+                recipients.extend(
+                    email.strip() for email in ccs.split(";") if email.strip()
+                )
+
+            server.sendmail(
+                email_user,
+                recipients,
+                msg.as_string()
+            )
+
+            logger.info(
+                f"File {file} sent to Customer:{send_to} with CCs:{cc_s}"
+            )
+
+    except Exception as e:
+        logger.error(f"Email send failed: {e}")
+        logger.exception(traceback.format_exc())

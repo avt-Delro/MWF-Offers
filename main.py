@@ -11,7 +11,7 @@ import send_email_text
 from itertools import islice
 
 #################################################
-#Start of main code
+# Start of main code
 #################################################
 
 api_key = env.odoo_api
@@ -21,7 +21,7 @@ flyer = env.flyer_file
 configuration = env.config_file
 
 
-#Configuration code
+# Configuration code
 config = pd.read_excel(configuration)
 
 config.columns = config.columns.str.strip().str.upper()
@@ -40,21 +40,28 @@ add_data: generate a file that uses bunch of function calls inside odoo_get.py
 '''
 def main():
     odoo_get.get_odoo_data(product_file)
-    
+
+    list_of_error_cust = []
+
     for customer, cust_conf in config_lookup.items():
         try:
             logging.info(f'Processing Customer: {customer}')
             file_to_send = odoo_get.add_data(product_file, cust_conf, cust_conf.get('PRICELIST'), cust_conf.get('HIDE_PRICING'), cust_conf.get('CAPPED'))
-            # send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
-            # os.remove(file_to_send)
-            
+            send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
+            os.remove(file_to_send)
+
         except Exception as e:
             logging.error(f"Error occurred while processing customer: {customer}")
             logging.exception(e)
             logging.exception(traceback.format_exc())
+            list_of_error_cust.append(customer)
             continue
-        
-        
+
+    if list_of_error_cust:
+        send_email_text.send_error_msg(
+            list_of_error_cust, "vjdelrosario@avatco.com", "vjdelrosario@avatco.com")
+
+
 def try_test():
     odoo_get.get_odoo_data(product_file)
     for customer, cust_conf in islice(config_lookup.items(), 2):
@@ -80,8 +87,7 @@ def selective_trigger(vendors_to_be_processed):
             logging.exception(e)
             logging.exception(traceback.format_exc())
             continue
-        
 
 
 if __name__ == "__main__":
-    selective_trigger(['ACETIREMIAMI'])
+    selective_trigger(["TIREPARTNERSTXAPOPKA"])

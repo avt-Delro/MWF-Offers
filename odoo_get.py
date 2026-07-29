@@ -467,38 +467,36 @@ def get_odoo_data(file):
 
         number_of_tries = 3
         
-        
-                #Pomona
-        get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
-        groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
-
-        #Carrolton
-        get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
-
-        #Latrobe
-        get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
-
-        #Kentucky
-        get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
-        
-        #Fort Worth
-        get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
-        
-        #Apopka
-        get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
-        
-        #Winschester
-        get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
-
-        #Hileaeah - Miami
-        get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
-
-        #Bloomsburg
-        get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
-        
         for i in range(number_of_tries):
             try:
+                #Pomona
+                get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
+                groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
 
+                #Carrolton
+                get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
+
+                #Latrobe
+                get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
+
+                #Kentucky
+                get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
+                
+                #Fort Worth
+                get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
+                
+                #Apopka
+                get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
+                
+                #Winschester
+                get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
+
+                #Hileaeah - Miami
+                get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
+
+                #Bloomsburg
+                get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
+        
                 #Winchester
                 get_on_hand_quant(file, partnum, 'Package/', 'Tennesse', 2)
 
@@ -887,6 +885,7 @@ def populate_data(file, config, customer, capped):
 
     #Filtering data that are 8 and up inventory
     filter_df = return_df[(return_df[warehouse_cols] >= 8).any(axis=1)]
+    create_sheet(file, list_to_append_data, f'{customer}')
 
     # create_sheet(f'no_pricelist/data_no_pricelist_6.xlsx', list_no_pricelist, f'{customer}')
 

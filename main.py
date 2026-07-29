@@ -90,4 +90,4 @@ def selective_trigger(vendors_to_be_processed):
 
 
 if __name__ == "__main__":
-    selective_trigger(["TIREPARTNERSTXAPOPKA"])
+    main()

@@ -242,18 +242,18 @@ def to_send_email(
     msg.attach(part)
 
     # Attach Flyer File
-    # with open(flyer_filename, "rb") as attachment:
-    #     part = MIMEBase("application", "octet-stream")
-    #     part.set_payload(attachment.read())
+    with open(flyer_filename, "rb") as attachment:
+        part = MIMEBase("application", "octet-stream")
+        part.set_payload(attachment.read())
 
-    # encoders.encode_base64(part)
+    encoders.encode_base64(part)
 
-    # part.add_header(
-    #     "Content-Disposition",
-    #     f'attachment; filename="{os.path.basename(flyer_filename)}"'
-    # )
+    part.add_header(
+        "Content-Disposition",
+        f'attachment; filename="{os.path.basename(flyer_filename)}"'
+    )
 
-    # msg.attach(part)
+    msg.attach(part)
 
     # Send Email
     try:
@@ -321,9 +321,6 @@ def send_error_msg(cust_list, send_to, ccs):
                 msg.as_string()
             )
 
-            logger.info(
-                f"File {file} sent to Customer:{send_to} with CCs:{cc_s}"
-            )
 
     except Exception as e:
         logger.error(f"Email send failed: {e}")

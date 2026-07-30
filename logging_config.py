@@ -14,8 +14,8 @@ for existing_handler in logger.handlers[:]:
 
 handler = RotatingFileHandler(
     log_file,
-    maxBytes=10_000_000,
-    backupCount=3
+    maxBytes=1_000_000_000,
+    backupCount=6
 )
 
 formatter = logging.Formatter(

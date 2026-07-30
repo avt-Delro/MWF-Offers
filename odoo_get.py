@@ -885,7 +885,6 @@ def populate_data(file, config, customer, capped):
 
     #Filtering data that are 8 and up inventory
     filter_df = return_df[(return_df[warehouse_cols] >= 8).any(axis=1)]
-    create_sheet(file, list_to_append_data, f'{customer}')
 
     # create_sheet(f'no_pricelist/data_no_pricelist_6.xlsx', list_no_pricelist, f'{customer}')
 

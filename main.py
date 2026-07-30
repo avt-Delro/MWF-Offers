@@ -59,7 +59,7 @@ def main():
 
     if list_of_error_cust:
         send_email_text.send_error_msg(
-            list_of_error_cust, "vjdelrosario@avatco.com", "vjdelrosario@avatco.com")
+            list_of_error_cust, "vjdelrosario@avatco.com;jhaieldelroiv@gmail.com;cadevilla@wtdus.com", "vjdelrosario@avatco.com")
 
 
 def try_test():
@@ -72,6 +72,7 @@ def try_test():
 def selective_trigger(vendors_to_be_processed):
     odoo_get.get_odoo_data(product_file)
 
+    list_of_error_cust = []
     for customer, cust_conf in config_lookup.items():
         try:
             if customer not in vendors_to_be_processed:
@@ -86,7 +87,12 @@ def selective_trigger(vendors_to_be_processed):
             logging.error(f"Error occurred while processing customer: {customer}")
             logging.exception(e)
             logging.exception(traceback.format_exc())
+            list_of_error_cust.append(customer)
             continue
+    
+    if list_of_error_cust:
+        send_email_text.send_error_msg(
+            list_of_error_cust, "vjdelrosario@avatco.com;jhaieldelroiv@gmail.com;cadevilla@wtdus.com", "vjdelrosario@avatco.com")
 
 
 if __name__ == "__main__":

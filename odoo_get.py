@@ -650,6 +650,7 @@ def populate_data(file, config, customer, capped):
 
     #Added product identification step to filter products based on config before querying Odoo for pricelist items
     df = identify_prod_to_add(file, config, customer)
+    
     #create_sheet(file, df.to_dict(orient= 'records'), customer)
     logger.info(f"Product identification completed, {type(df)} products to process for customer '{customer}'")
     codes = df['PRODUCT'].dropna().unique().tolist()
@@ -657,10 +658,10 @@ def populate_data(file, config, customer, capped):
     # If customer is multiple price list 
     domain = [
         ('product_tmpl_id.default_code', 'in', codes),
-        # ('fixed_price', '!=', 0),
+        ('fixed_price', '!=', 0),
         
     ] + (
-        [('pricelist_id.name', 'ilike', customer)]
+        [('pricelist_id.name', 'ilike', customer), ('pricelist_id.active', '=', True)]
         if not isinstance(customer, list)
         else ['|'] * (len(customer) - 1) + [('pricelist_id.name', 'ilike', c) for c in customer]
     )
@@ -681,7 +682,6 @@ def populate_data(file, config, customer, capped):
                 'fixed_price',
                 'write_date',
             ],
-            'order': 'write_date desc',
         }
     )
     logger.info(f"Fetched:{products}")

@@ -92,8 +92,8 @@ def selective_trigger(vendors_to_be_processed):
     
     if list_of_error_cust:
         send_email_text.send_error_msg(
-            list_of_error_cust, "vjdelrosario@avatco.com;jhaieldelroiv@gmail.com;cadevilla@wtdus.com", "vjdelrosario@avatco.com")
+            list_of_error_cust, "vjdelrosario@avatco.com;jhaieldelroiv@gmail.com", "vjdelrosario@avatco.com")
 
 
 if __name__ == "__main__":
-    main()
+    selective_trigger(['ETCZ6'])

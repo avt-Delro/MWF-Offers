@@ -5,7 +5,7 @@ import os
 import odoo_get
 import pandas as pd
 import numpy as np
-import logging
+from logging_config import logger
 import odoo_get
 import send_email_text
 from itertools import islice
@@ -39,21 +39,24 @@ get_odoo_data: fetch odoo data from production using xmlrpc calls
 add_data: generate a file that uses bunch of function calls inside odoo_get.py
 '''
 def main():
+    logger.info(
+        f"---------------------------------------------------- \n -Starting MWF Automation- \n ----------------------------------------------------"
+    )
     odoo_get.get_odoo_data(product_file)
 
     list_of_error_cust = []
 
     for customer, cust_conf in config_lookup.items():
         try:
-            logging.info(f'Processing Customer: {customer}')
+            logger.info(f'Processing Customer: {customer}')
             file_to_send = odoo_get.add_data(product_file, cust_conf, cust_conf.get('PRICELIST'), cust_conf.get('HIDE_PRICING'), cust_conf.get('CAPPED'))
             send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
             os.remove(file_to_send)
 
         except Exception as e:
-            logging.error(f"Error occurred while processing customer: {customer}")
-            logging.exception(e)
-            logging.exception(traceback.format_exc())
+            logger.error(f"Error occurred while processing customer: {customer}")
+            logger.exception(e)
+            logger.exception(traceback.format_exc())
             list_of_error_cust.append(customer)
             continue
 
@@ -65,11 +68,14 @@ def main():
 def try_test():
     odoo_get.get_odoo_data(product_file)
     for customer, cust_conf in islice(config_lookup.items(), 2):
-        logging.info(f'Processing Customer: {customer}')
+        logger.info(f'Processing Customer: {customer}')
         file_to_send = odoo_get.add_data(cust_conf, customer)
         send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
 
 def selective_trigger(vendors_to_be_processed):
+    logger.info(
+            f"---------------------------------------------------- \n -Starting MWF Automation- \n ----------------------------------------------------"
+        )
     odoo_get.get_odoo_data(product_file)
 
     list_of_error_cust = []
@@ -78,15 +84,15 @@ def selective_trigger(vendors_to_be_processed):
             if customer not in vendors_to_be_processed:
                 continue
 
-            logging.info(f'Processing Customer: {customer}')
+            logger.info(f'Processing Customer: {customer}')
             file_to_send = odoo_get.add_data(product_file, cust_conf, cust_conf.get('PRICELIST'), cust_conf.get('HIDE_PRICING'), cust_conf.get('CAPPED'))
             send_email_text.to_send_email(file_to_send, flyer, cust_conf.get('SEND_TO'), cust_conf.get('CC_S'), cust_conf.get('LOC_CODE'), cust_conf.get('NAME'))
             os.remove(file_to_send)
             
         except Exception as e:
-            logging.error(f"Error occurred while processing customer: {customer}")
-            logging.exception(e)
-            logging.exception(traceback.format_exc())
+            logger.error(f"Error occurred while processing customer: {customer}")
+            logger.exception(e)
+            logger.exception(traceback.format_exc())
             list_of_error_cust.append(customer)
             continue
     
@@ -96,4 +102,4 @@ def selective_trigger(vendors_to_be_processed):
 
 
 if __name__ == "__main__":
-    selective_trigger(['ETCZ6'])
+    main()

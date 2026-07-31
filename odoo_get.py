@@ -315,8 +315,8 @@ def get_last_number(tire_size):
         new_size = tire_size[-2:]
         return new_size
 
-def groupby_je(filepath_exc, column_names, name_of_sheet, get_column):
-    df = pd.read_excel(filepath_exc, engine='openpyxl', sheet_name=name_of_sheet)
+def groupby_je(df, column_names, name_of_sheet, get_column):
+    df = pd.DataFrame(df)
     
     if isinstance(column_names, str):
         column_names = [column_names]
@@ -329,7 +329,7 @@ def groupby_je(filepath_exc, column_names, name_of_sheet, get_column):
                        .to_dict(orient = 'records')
                        )
     
-    create_sheet(filepath_exc, code_dictionary, name_of_sheet)
+    return pd.DataFrame(code_dictionary)
 
 # default_code:: List, loc_key:: String
 def get_on_hand_quant(file, default_code, loc_key, sheet_name, odoo_instance):
@@ -346,8 +346,10 @@ def get_on_hand_quant(file, default_code, loc_key, sheet_name, odoo_instance):
                 'fields': ['product_reference_code', 'available_quantity', 'location_id']
             })
         
+        return pd.DataFrame(product_quant)
         
-        create_sheet(file, product_quant, sheet_name)
+        
+        # create_sheet(file, product_quant, sheet_name)
     elif odoo_instance == 2:
         uid, models = get_models_v2()
         
@@ -394,9 +396,8 @@ def get_on_hand_quant(file, default_code, loc_key, sheet_name, odoo_instance):
                 quant['product_id'][0]
                 )
         
-        logger.info(f'Product quant: {type(product_quant)}: {product_quant}')
         
-        create_sheet(file, product_quant, sheet_name)
+        return pd.DataFrame(product_quant)
 
 
 def df_to_qty_map(df, product_col, qty_col='available_quantity'):
@@ -439,7 +440,6 @@ def get_odoo_data(file):
         records = df.to_dict(orient='records')
         codes = df['PRODUCT'].dropna().unique().tolist()
         partnum = df['PN'].dropna().unique().tolist()
-        logger.info(f"Unique default_codes extracted: {codes}")
         logger.info("Collected %d unique default_codes", len(codes))
 
 
@@ -470,35 +470,35 @@ def get_odoo_data(file):
         for i in range(number_of_tries):
             try:
                 #Pomona
-                get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
-                groupby_je(file, 'product_reference_code', 'Pomona', 'available_quantity')
+                pomona_quant = get_on_hand_quant(file, codes, ['BIN326', '326/Input','326/PORT','326/WHL', '326/OLT'], 'Pomona', 1)
+                pomona_quant = groupby_je(pomona_quant, 'product_reference_code', 'Pomona', 'available_quantity')
 
                 #Carrolton
-                get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
+                carr_quant = get_on_hand_quant(file, codes, '331/Stock', 'Carrolton',1)
 
                 #Latrobe
-                get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
+                latrobe_quant = get_on_hand_quant(file, codes, '381/Stock' , 'Latrobe',1)
 
                 #Kentucky
-                get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
+                kent_quant = get_on_hand_quant(file, codes, '357/Stock', 'Kentucky',1)
                 
                 #Fort Worth
-                get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
+                fortworth_quant = get_on_hand_quant(file, codes, '380/Stock', 'Fort Worth',1)
                 
                 #Apopka
-                get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
+                apopka_quant = get_on_hand_quant(file, codes, '321/Stock', 'Apopka',1)
                 
                 #Winschester
-                get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
+                winchester_quant = get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
 
                 #Hileaeah - Miami
-                get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
+                miami_quant = get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
 
                 #Bloomsburg
-                get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
+                bloomsburg_quant = get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
         
                 #Winchester
-                get_on_hand_quant(file, partnum, 'Package/', 'Tennesse', 2)
+                tennesse_quant = get_on_hand_quant(file, partnum, 'Package/', 'Tennesse', 2)
 
                 #If all successful break the loop
                 break
@@ -511,22 +511,23 @@ def get_odoo_data(file):
                 logger.error(f"File: {failed_line.filename}")
                 logger.error(f"Line number: {failed_line.lineno}")
                 logger.error(f"Code: {failed_line.line}")
-                if i == number_of_tries:
+                if i == number_of_tries-1:
                     logger.error(
                         "Maximum number of retries reached."
                     )
-                    pass
+                    
+                    break
 
-        pomona_quant = pd.read_excel(file, sheet_name='Pomona')
-        carr_quant = pd.read_excel(file, sheet_name='Carrolton')
-        latrobe_quant = pd.read_excel(file, sheet_name='Latrobe')
-        kent_quant = pd.read_excel(file, sheet_name='Kentucky')
-        fortworth_quant = pd.read_excel(file, sheet_name='Fort Worth')
-        apopka_quant = pd.read_excel(file, sheet_name='Apopka')
-        winchester_quant = pd.read_excel(file, sheet_name='Winchester')
-        miami_quant = pd.read_excel(file, sheet_name='Miami')
-        bloomsburg_quant = pd.read_excel(file, sheet_name='Bloomsburg')
-        tennesse_quant = pd.read_excel(file, sheet_name='Tennesse')
+        # pomona_quant = pd.read_excel(file, sheet_name='Pomona')
+        # carr_quant = pd.read_excel(file, sheet_name='Carrolton')
+        # latrobe_quant = pd.read_excel(file, sheet_name='Latrobe')
+        # kent_quant = pd.read_excel(file, sheet_name='Kentucky')
+        # fortworth_quant = pd.read_excel(file, sheet_name='Fort Worth')
+        # apopka_quant = pd.read_excel(file, sheet_name='Apopka')
+        # winchester_quant = pd.read_excel(file, sheet_name='Winchester')
+        # miami_quant = pd.read_excel(file, sheet_name='Miami')
+        # bloomsburg_quant = pd.read_excel(file, sheet_name='Bloomsburg')
+        # tennesse_quant = pd.read_excel(file, sheet_name='Tennesse')
 
         pm_map = df_to_qty_map(pomona_quant,'product_reference_code')
         carr_map = df_to_qty_map(carr_quant,'product_reference_code')
@@ -665,26 +666,36 @@ def populate_data(file, config, customer, capped):
         if not isinstance(customer, list)
         else ['|'] * (len(customer) - 1) + [('pricelist_id.name', 'ilike', c) for c in customer]
     )
+    
+    
+    products = None
 
-
-
-    products = models.execute_kw(
-        ODOO_DB_B2B,
-        uid,
-        ODOO_PASSWORD_B2B,
-        'product.pricelist.item',
-        'search_read',
-        [domain],
-        {
-            'fields': [
-                'product_tmpl_id',
-                'pricelist_id',
-                'fixed_price',
-                'write_date',
-            ],
-        }
-    )
-    logger.info(f"Fetched:{products}")
+    for attempt in range(1,4):
+        try:
+            
+            products = models.execute_kw(
+                ODOO_DB_B2B,
+                uid,
+                ODOO_PASSWORD_B2B,
+                'product.pricelist.item',
+                'search_read',
+                [domain],
+                {
+                    'fields': [
+                        'product_tmpl_id',
+                        'pricelist_id',
+                        'fixed_price',
+                        'write_date',
+                    ],
+                }
+            )
+            break
+        except Exception as e:
+            logger.warning(f'Attempt {attempt}/3 failed: {e}')
+            
+            if attempt == 3:
+                raise
+    
 
     if not products:
         logger.warning("No pricelist items found for the given default_codes")

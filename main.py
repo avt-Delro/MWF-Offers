@@ -40,7 +40,7 @@ add_data: generate a file that uses bunch of function calls inside odoo_get.py
 '''
 def main():
     logger.info(
-        f"---------------------------------------------------- \n -Starting MWF Automation- \n ----------------------------------------------------"
+        f"-----------------------------------------------------Starting MWF Automation-----------------------------------------------------"
     )
     odoo_get.get_odoo_data(product_file)
 
@@ -74,7 +74,7 @@ def try_test():
 
 def selective_trigger(vendors_to_be_processed):
     logger.info(
-            f"---------------------------------------------------- \n -Starting MWF Automation- \n ----------------------------------------------------"
+            f"-----------------------------------------------------Starting MWF Automation-----------------------------------------------------"
         )
     odoo_get.get_odoo_data(product_file)
 

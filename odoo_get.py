@@ -631,7 +631,7 @@ def get_odoo_data(file):
 
 def populate_data(file, config, customer, capped):
     # context = ssl._create_unverified_context()
- 
+
     # common = xmlrpc.client.ServerProxy(
     #     f"{ODOO_URL_B2B}/xmlrpc/2/common",
     #     context=context
@@ -644,68 +644,66 @@ def populate_data(file, config, customer, capped):
     #     print('hello b2b')
     # else:
     #     logger.error("Failed")
-    
+
     # models = xmlrpc.client.ServerProxy(f"{ODOO_URL_B2B}/xmlrpc/2/object", context=context)
 
     uid, models = get_models()
 
-    #Added product identification step to filter products based on config before querying Odoo for pricelist items
+    # Added product identification step to filter products based on config before querying Odoo for pricelist items
     df = identify_prod_to_add(file, config, customer)
-    
-    #create_sheet(file, df.to_dict(orient= 'records'), customer)
+
+    # create_sheet(file, df.to_dict(orient= 'records'), customer)
     logger.info(f"Product identification completed, {type(df)} products to process for customer '{customer}'")
     codes = df['PRODUCT'].dropna().unique().tolist()
 
-    # If customer is multiple price list 
+    # If customer is multiple price list
     domain = [
         ('product_tmpl_id.default_code', 'in', codes),
         ('fixed_price', '!=', 0),
         
     ] + (
-        [('pricelist_id.name', 'ilike', customer), ('pricelist_id.active', '=', True)]
+        [('pricelist_id.name', 'ilike', customer), ('pricelist_id.pl_is_main', '=', True)]
         if not isinstance(customer, list)
         else ['|'] * (len(customer) - 1) + [('pricelist_id.name', 'ilike', c) for c in customer]
     )
-    
-    
+
     products = None
 
     for attempt in range(1,4):
         try:
-            
+
             products = models.execute_kw(
                 ODOO_DB_B2B,
                 uid,
                 ODOO_PASSWORD_B2B,
-                'product.pricelist.item',
-                'search_read',
+                "product.pricelist.item",
+                "search_read",
                 [domain],
                 {
-                    'fields': [
-                        'product_tmpl_id',
-                        'pricelist_id',
-                        'fixed_price',
-                        'write_date',
+                    "fields": [
+                        "product_tmpl_id",
+                        "pricelist_id",
+                        "fixed_price",
+                        "write_date",
                     ],
-                }
+                    "order": "write_date desc",
+                },
             )
             break
         except Exception as e:
             logger.warning(f'Attempt {attempt}/3 failed: {e}')
-            
+
             if attempt == 3:
                 raise
-    
 
     if not products:
         logger.warning("No pricelist items found for the given default_codes")
         return
 
     list_to_append_data = []
-    
+
     price_index = defaultdict(list)
-    
-    
+
     # --------------------------------------------------
     # FILTER + INDEX (STRICT MATCH USING normalize)
     # --------------------------------------------------
@@ -717,7 +715,6 @@ def populate_data(file, config, customer, capped):
 
     price_index = {}
 
-    
     prod_df = pd.DataFrame([
         {
             "line_id": item["id"],
@@ -743,7 +740,7 @@ def populate_data(file, config, customer, capped):
         pricelist_name = pricelist
 
         # Final strict check (cannot be done in Odoo domain)
-        
+
         name_norm = normalize(pricelist_name)
 
         if isinstance(target, list):
@@ -753,7 +750,6 @@ def populate_data(file, config, customer, capped):
             if target not in name_norm:
                 continue
 
-
         default_code = product
 
         # First record is latest (already ordered by write_date desc)
@@ -761,8 +757,7 @@ def populate_data(file, config, customer, capped):
             price_index[default_code] = p
 
     logger.info(f"FINISHED INDEXING PRICES, total indexed products: {len(price_index)}")
-    
-    
+
     # --------------------------------------------------
     # BUILD FINAL OUTPUT
     # --------------------------------------------------
@@ -794,7 +789,7 @@ def populate_data(file, config, customer, capped):
             miami = min(row['MIAMI'], 200)
             bloomsburg = min(row['BLOOMSBURG'], 200)
             tennesse = min(row['TENNESSE'], 200)
-        
+
         else:
             pomona = row['POMONA']
             carrolton = math.floor(row['CARROLTON'] * 0.75)
@@ -806,12 +801,11 @@ def populate_data(file, config, customer, capped):
             miami = row['MIAMI']
             bloomsburg = row['BLOOMSBURG']
             tennesse = row['TENNESSE']
-            
+
         fet = row['FET']
         part = row['PART']
 
-
-    # Finding default codes without price rules
+        # Finding default codes without price rules
         if not latest:
             logger.warning(
                 f"No {customer} price rules found for default_code={default_code} not adding it to the output"
@@ -819,7 +813,6 @@ def populate_data(file, config, customer, capped):
             # list_no_pricelist.append({customer: default_code})
 
             continue
-    
 
         pricelist_name = latest['pricelist_name']
         price = latest['fixed_price']
@@ -866,7 +859,7 @@ def populate_data(file, config, customer, capped):
 
     elif config['LOC_CODE'] in ['PS']:
         warehouse_cols = ['California', 'Carrolton', 'Latrobe', 'FortWorth', 'Kentucky', 'Apopka']
-    
+
     else:
         warehouse_cols = []
 
@@ -894,10 +887,11 @@ def populate_data(file, config, customer, capped):
             elif loc == 'T':
                 warehouse_cols.append('Tennesse')
 
-    #Filtering data that are 8 and up inventory
+    # Filtering data that are 8 and up inventory
     filter_df = return_df[(return_df[warehouse_cols] >= 8).any(axis=1)]
 
     # create_sheet(f'no_pricelist/data_no_pricelist_6.xlsx', list_no_pricelist, f'{customer}')
+    #create_sheet(file, list_to_append_data, f'{customer}')
 
     return filter_df
 

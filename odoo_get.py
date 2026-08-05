@@ -492,7 +492,7 @@ def get_odoo_data(file):
                 winchester_quant = get_on_hand_quant(file, codes, '376/Stock', 'Winchester',1)
 
                 #Hileaeah - Miami
-                miami_quant = get_on_hand_quant(file, codes, '305/Stock', 'Miami',1)
+                miami_quant = get_on_hand_quant(file, codes, 'BIN/', 'Miami',1)
 
                 #Bloomsburg
                 bloomsburg_quant = get_on_hand_quant(file, codes, '570/Stock', 'Bloomsburg',1)
@@ -662,7 +662,7 @@ def populate_data(file, config, customer, capped):
         ('fixed_price', '!=', 0),
         
     ] + (
-        [('pricelist_id.name', 'ilike', customer), ('pricelist_id.pl_is_main', '=', True)]
+        [('pricelist_id.name', 'ilike', customer), ('pricelist_id.active', '=', True)]
         if not isinstance(customer, list)
         else ['|'] * (len(customer) - 1) + [('pricelist_id.name', 'ilike', c) for c in customer]
     )
